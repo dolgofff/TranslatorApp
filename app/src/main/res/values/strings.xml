@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TranslatorApp</string>
+    <string name="translator">Translator</string>
+    <string name="default_web_client_id">687919845094-2ou10so6elq7ac5gm8gpduj0n0lke8r9.apps.googleusercontent.com</string>
+</resources>
