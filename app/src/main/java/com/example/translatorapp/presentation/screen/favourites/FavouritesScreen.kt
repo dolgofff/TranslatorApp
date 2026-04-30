@@ -1,6 +1,7 @@
 package com.example.translatorapp.presentation.screen.favourites
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -17,13 +18,15 @@ import com.example.translatorapp.presentation.ui.components.FavouritesTopBar
 fun FavouritesScreen(viewmodel: FavouritesViewModel = hiltViewModel(), onNavBackClick: () -> Unit) {
     val state by viewmodel.favouritesState.collectAsStateWithLifecycle()
 
-    Scaffold(topBar = {
-        FavouritesTopBar(
-            onNavBackClick = onNavBackClick,
-            onSortByAlphabet = viewmodel::sortByAlphabet,
-            onSortByDate = viewmodel::sortByDate
-        )
-    }
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            FavouritesTopBar(
+                onNavBackClick = onNavBackClick,
+                onSortByAlphabet = viewmodel::sortByAlphabet,
+                onSortByDate = viewmodel::sortByDate
+            )
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier

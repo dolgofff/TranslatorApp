@@ -81,7 +81,7 @@ fun LoginForm(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        EmailField(email = email, onEmailChange = onEmailChange)
+        EmailField(email = email, onEmailChange = onEmailChange, errorText = errorText)
 
         Spacer(Modifier.height(16.dp))
 
@@ -115,6 +115,7 @@ fun LoginForm(
 private fun EmailField(
     email: String,
     onEmailChange: (String) -> Unit,
+    errorText: String?,
 ) {
     OutlinedTextField(
         value = email,
@@ -127,6 +128,7 @@ private fun EmailField(
                 contentDescription = "Email Icon"
             )
         },
+        isError = (errorText != null),
         shape = RoundedCornerShape(14.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         modifier = Modifier.fillMaxWidth()
@@ -189,6 +191,7 @@ private fun ConfirmPasswordField(
     onConfirmPasswordChange: (String) -> Unit,
     confirmPasswordVisible: Boolean,
     onConfirmPasswordVisibilityChange: () -> Unit,
+    errorText: String?,
 ) {
     OutlinedTextField(
         value = confirmPassword,
@@ -215,6 +218,7 @@ private fun ConfirmPasswordField(
                 )
             }
         },
+        isError = (errorText != null),
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -378,7 +382,7 @@ fun RegistrationForm(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        EmailField(email = email, onEmailChange = onEmailChange)
+        EmailField(email = email, onEmailChange = onEmailChange, errorText = errorText)
 
         Spacer(Modifier.height(16.dp))
 
@@ -396,8 +400,8 @@ fun RegistrationForm(
             confirmPassword = confirmPassword,
             onConfirmPasswordChange = onConfirmPasswordChange,
             confirmPasswordVisible = confirmPasswordVisible,
-            onConfirmPasswordVisibilityChange = onConfirmPasswordVisibilityChange
-
+            onConfirmPasswordVisibilityChange = onConfirmPasswordVisibilityChange,
+            errorText = errorText
         )
 
         Spacer(Modifier.height(24.dp))

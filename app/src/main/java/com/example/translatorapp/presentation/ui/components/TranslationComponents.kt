@@ -7,11 +7,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,6 +40,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -44,6 +49,7 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
@@ -74,6 +80,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,90 +94,103 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.translatorapp.R
+import com.example.translatorapp.domain.model.LanguageCode
 import com.example.translatorapp.domain.model.Translation
 import com.example.translatorapp.presentation.mapper.formatDateTime
 import com.example.translatorapp.presentation.ui.theme.Black
 import com.example.translatorapp.presentation.ui.theme.ButtonColor
 import com.example.translatorapp.presentation.ui.theme.MainColor
 import com.example.translatorapp.presentation.ui.theme.TranslationBoxColor
+import kotlinx.coroutines.delay
 import kotlin.time.ExperimentalTime
 
 // Main Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TranslationTopBar(onFavouritesClick: () -> Unit, onAccountClick: () -> Unit) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = "Translator",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
-            )
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = onFavouritesClick
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Bookmarks,
-                    tint = MainColor,
-                    contentDescription = "Favourites"
+fun TranslationTopBar(
+    isSimple: Boolean,
+    onFavouritesClick: () -> Unit,
+    onResetUiMode: () -> Unit,
+    onAccountClick: () -> Unit,
+) {
+    if (isSimple) {
+        CenterAlignedTopAppBar(
+            title = {},
+            navigationIcon = { ButtonBack(onNavBackClick = onResetUiMode) }
+        )
+    } else {
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "Translator",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium
                 )
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = onFavouritesClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Bookmarks,
+                        tint = MainColor,
+                        contentDescription = "Favourites"
+                    )
+                }
+            },
+            actions = {
+                IconButton(
+                    onClick = onAccountClick
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AccountCircle,
+                        tint = MainColor,
+                        modifier = Modifier.size(28.dp),
+                        contentDescription = "Account"
+                    )
+                }
             }
-        },
-        actions = {
-            IconButton(
-                onClick = onAccountClick
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.AccountCircle,
-                    tint = MainColor,
-                    modifier = Modifier.size(28.dp),
-                    contentDescription = "Account"
-                )
-            }
-        }
-    )
+        )
+    }
 }
 
 @Composable
 fun TranslationCard(
     sourceText: String,
     translatedText: String,
-    isFocused: Boolean,
     hasInput: Boolean,
-    onTranslationTextChanged: (String) -> Unit,
+    onPlayTranslationAudio: () -> Unit,
+    onPlaySourceAudio: () -> Unit,
+    isFocused: Boolean,
+    onTextChanged: (String) -> Unit,
     onFocusChanged: (Boolean) -> Unit,
-    onPaste: (String) -> Unit,
+    onDone: () -> Unit,
+    isFavourite: Boolean,
+    onToggleFavourite: () -> Unit,
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
     @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
-    var hasClipboardText by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val hasClipboardText = !clipboard.getText().isNullOrEmpty()
 
     val focusRequester = remember { FocusRequester() }
     val elevation by animateDpAsState(targetValue = if (isFocused) 8.dp else 2.dp)
-
-    LaunchedEffect(isFocused) {
-        if (isFocused) {
-            hasClipboardText = !clipboard.getText().isNullOrEmpty()
-        }
-    }
+    val minHeight by animateDpAsState(targetValue = if (isFocused) 120.dp else 160.dp)
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 160.dp)
-            .focusRequester(focusRequester)
+            .heightIn(min = minHeight)
             .clickable {
-                focusRequester.requestFocus()
-                keyboardController?.show()
+                if (!isFocused) {
+                    focusRequester.requestFocus()
+                }
             },
         shape = RoundedCornerShape(24.dp),
         tonalElevation = elevation,
@@ -183,7 +203,7 @@ fun TranslationCard(
         ) {
             OutlinedTextField(
                 value = sourceText,
-                onValueChange = onTranslationTextChanged,
+                onValueChange = onTextChanged,
                 placeholder = {
                     Text(
                         text = "Enter text",
@@ -192,9 +212,21 @@ fun TranslationCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        if (hasInput) {
+                            onDone()
+                            keyboardController?.hide()
+                        }
+                    }
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(560.dp)
+                    .focusRequester(focusRequester)
                     .onFocusChanged {
                         onFocusChanged(it.isFocused)
                     },
@@ -203,6 +235,35 @@ fun TranslationCard(
                     focusedBorderColor = Color.Transparent
                 )
             )
+
+            AnimatedVisibility(visible = hasInput && !isFocused) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    IconButton(
+                        onClick = onPlaySourceAudio
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Translation audio"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    IconButton(
+                        onClick = { clipboard.setText(AnnotatedString(sourceText)) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy text"
+                        )
+                    }
+                }
+            }
 
             AnimatedVisibility(visible = hasInput) {
                 Column {
@@ -220,11 +281,27 @@ fun TranslationCard(
                         horizontalArrangement = Arrangement.End
                     ) {
                         IconButton(
-                            onClick = { /* TODO: Voice reads translation */ }
+                            onClick = onPlayTranslationAudio
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                contentDescription = "Speak"
+                                contentDescription = "Translation audio"
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        IconButton(
+                            onClick = onToggleFavourite
+                        ) {
+                            Icon(
+                                imageVector = if (isFavourite) {
+                                    Icons.Filled.Bookmark
+                                } else {
+                                    Icons.Default.BookmarkBorder
+                                },
+                                tint = MainColor,
+                                contentDescription = "Toggle favourite"
                             )
                         }
 
@@ -242,7 +319,7 @@ fun TranslationCard(
 
             AnimatedVisibility(visible = isFocused && hasClipboardText && !hasInput) {
                 PasteButton(
-                    onPaste = { clipboard.getText()?.text?.let { onPaste(it) } }
+                    onPaste = { clipboard.getText()?.text?.let { onTextChanged(it) } }
                 )
             }
         }
@@ -280,7 +357,7 @@ private fun PasteButton(onPaste: () -> Unit) {
     }
 }
 
-@Composable
+/*@Composable
 fun LanguageSelector(
     sourceLanguage: String,
     targetLanguage: String,
@@ -290,7 +367,7 @@ fun LanguageSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         LanguageChip(
-            text = sourceLanguage,
+            language = sourceLanguage,
             modifier = Modifier.weight(1f)
         )
 
@@ -301,43 +378,171 @@ fun LanguageSelector(
         Spacer(Modifier.width(8.dp))
 
         LanguageChip(
-            text = targetLanguage,
+            language = targetLanguage,
             modifier = Modifier.weight(1f)
+        )
+    }
+}*/
+
+@Composable
+fun LanguageSelector(
+    sourceLanguage: LanguageCode,
+    destinationLanguage: LanguageCode,
+    languageList: List<LanguageCode>,
+    onSourceLanguageChange: (LanguageCode) -> Unit,
+    onDestinationLanguageChange: (LanguageCode) -> Unit,
+    onSwapLanguages: () -> Unit,
+) {
+    var isSwapping by remember { mutableStateOf(false) }
+
+    val transition = updateTransition(targetState = isSwapping)
+
+    val offset by transition.animateDp(
+        transitionSpec = { tween(durationMillis = 300) }
+    ) { swapping ->
+        if (swapping) 48.dp else 0.dp
+    }
+
+    LaunchedEffect(isSwapping) {
+        if (isSwapping) {
+            delay(150)
+
+            onSwapLanguages()
+
+            delay(150)
+
+            isSwapping = false
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LanguageChip(
+            language = sourceLanguage,
+            languageList = languageList,
+            onSelected = {
+                if (it.code != destinationLanguage.code) {
+                    onSourceLanguageChange(it)
+                }
+            },
+            modifier = Modifier
+                .weight(1f)
+                .offset(x = offset)
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        SwapButton(
+            onClick = {
+                if (!isSwapping && sourceLanguage.code != destinationLanguage.code) {
+                    isSwapping = true
+                }
+            }
+        )
+
+        Spacer(Modifier.width(8.dp))
+
+        LanguageChip(
+            language = destinationLanguage,
+            languageList = languageList,
+            onSelected = {
+                if (it.code != sourceLanguage.code) {
+                    onDestinationLanguageChange(it)
+                }
+            },
+            modifier = Modifier
+                .weight(1f)
+                .offset(x = -offset),
         )
     }
 }
 
 @Composable
 private fun LanguageChip(
-    text: String,
+    language: LanguageCode,
+    languageList: List<LanguageCode>,
+    onSelected: (LanguageCode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier
-            .height(48.dp)
-            .clickable { },
-        shape = RoundedCornerShape(16.dp),
-        color = TranslationBoxColor,
-        tonalElevation = 2.dp
-    ) {
-        Box(
-            contentAlignment = Alignment.Center
+    var expanded by rememberSaveable { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clickable(
+                    onClick = { expanded = true }
+                ),
+            shape = RoundedCornerShape(16.dp),
+            color = TranslationBoxColor,
+            tonalElevation = 2.dp
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = language.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            languageList.forEach { item ->
+                val isSelected = item.code == language.code
+
+                Surface(
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        Color.Transparent
+                    }
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = item.title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        onClick = {
+                            onSelected(item)
+
+                            expanded = false
+                        },
+                        trailingIcon = {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    tint = MainColor,
+                                    contentDescription = "Selected language"
+                                )
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun SwapButton() {
+private fun SwapButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .size(48.dp)
-            .clickable { },
+            .clickable { onClick() },
         shape = CircleShape,
         color = MaterialTheme.colorScheme.background
     ) {
@@ -402,7 +607,7 @@ private fun SmallActionButton(
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onPrimary
             )
         }
     }

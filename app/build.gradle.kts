@@ -57,7 +57,7 @@ dependencies {
     implementation(project(":data"))
 
     // Serialization
-    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
 
     // Navigation3 dependencies
     implementation(libs.androidx.navigation3.ui)

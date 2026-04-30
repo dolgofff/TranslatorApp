@@ -1,7 +1,8 @@
 package com.example.translatorapp.domain.error
 
-sealed class AuthError : Throwable() {
+sealed class AuthError : Exception() {
     class EmailAlreadyInUse : AuthError()
+    class EmptyCredentials : AuthError()
     class WeakPassword : AuthError()
     class InvalidEmail : AuthError()
     class WrongPassword : AuthError()

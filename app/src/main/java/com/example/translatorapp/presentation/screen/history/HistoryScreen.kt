@@ -1,6 +1,7 @@
 package com.example.translatorapp.presentation.screen.history
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -17,12 +18,14 @@ import com.example.translatorapp.presentation.ui.components.HistoryTopBar
 fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel(), onNavBackClick: () -> Unit) {
     val state by viewModel.historyState.collectAsStateWithLifecycle()
 
-    Scaffold(topBar = {
-        HistoryTopBar(
-            onNavBackClick = onNavBackClick,
-            onClear = viewModel::clear
-        )
-    }
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            HistoryTopBar(
+                onNavBackClick = onNavBackClick,
+                onClear = viewModel::clear
+            )
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier

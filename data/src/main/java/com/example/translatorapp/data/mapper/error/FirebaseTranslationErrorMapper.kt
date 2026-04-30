@@ -1,11 +1,10 @@
-package com.example.translatorapp.data.mapper
+package com.example.translatorapp.data.mapper.error
 
 import com.example.translatorapp.domain.error.TranslationError
-import com.example.translatorapp.domain.error.TranslationErrorMapper
 import com.google.firebase.firestore.FirebaseFirestoreException
 
-class TranslationErrorMapperImpl : TranslationErrorMapper {
-    override operator fun invoke(exc: Throwable): TranslationError {
+class FirebaseTranslationErrorMapper {
+    operator fun invoke(exc: Exception): TranslationError {
         return when (exc) {
             is FirebaseFirestoreException -> when (exc.code) {
                 FirebaseFirestoreException.Code.PERMISSION_DENIED -> TranslationError.PermissionDenied()

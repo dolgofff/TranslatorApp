@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.gms)
+
+    alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.google.protobuf)
 }
 
 android {
@@ -22,6 +25,7 @@ android {
 
     buildTypes {
         release {
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -41,19 +45,43 @@ android {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
         }
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
-    implementation (project(":domain"))
+    implementation(project(":domain"))
 
     // Firebase dependencies
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.auth.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    //Proto DataStore
+    //implementation(libs.google.protobuf)
+    implementation(libs.androidx.datastore)
 
     // Hilt dependencies
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.android)
+
+    // Retrofit dependencies
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.ser)
+    implementation(libs.kotlinx.serialization.json)
+
+    // OkHttp dependencies
+    implementation(libs.okhttp.logging)
+    implementation(libs.okhttp)
+
+    // Audio player
+    implementation(libs.androidx.exoplayer)
+
+    // Serialization bug-fix
+    implementation(libs.androidx.annotation.experimental)
 
     // Test dependencies
     testImplementation(libs.junit)

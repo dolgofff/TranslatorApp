@@ -1,7 +1,9 @@
 package com.example.translatorapp.presentation.screen.login
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,7 +30,7 @@ import com.example.translatorapp.presentation.ui.components.LoginTitle
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onSignInClick: () -> Unit,
-    onSignUpNavClick: () -> Unit
+    onSignUpNavClick: () -> Unit,
 ) {
     val state by viewModel.loginState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -41,10 +43,17 @@ fun LoginScreen(
     LaunchedEffect(googleSignInRequested) {
         if (googleSignInRequested == 0) return@LaunchedEffect
 
+        Log.d("GoogleSignIn", "LaunchedEffect triggered")
+
         val idToken = handler.requestIdToken()
 
-        if (idToken != null)
+        Log.d("GoogleSignIn", "Token received: $idToken")
+
+        if (idToken != null) {
             viewModel.signInWithGoogle(idToken = idToken, onSuccess = onSignInClick)
+        } else {
+            viewModel.onGoogleSignInFailed()
+        }
     }
 
     LaunchedEffect(state.resetPasswordEmailSent) {
@@ -55,7 +64,8 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0)
     ) { paddingValues ->
         Column(
             modifier = Modifier

@@ -1,7 +1,8 @@
 package com.example.translatorapp.data.repository
 
-import com.example.translatorapp.data.mapper.FirebaseAuthErrorMapper
-import com.example.translatorapp.data.mapper.toDomainUser
+import android.util.Log
+import com.example.translatorapp.data.mapper.entity.toDomainUser
+import com.example.translatorapp.data.mapper.error.FirebaseAuthErrorMapper
 import com.example.translatorapp.domain.error.AuthError
 import com.example.translatorapp.domain.model.User
 import com.example.translatorapp.domain.repository.AuthRepository
@@ -10,8 +11,9 @@ import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepositoryImpl(
     private val firebaseAuth: FirebaseAuth,
@@ -29,72 +31,93 @@ class AuthRepositoryImpl(
         awaitClose {
             firebaseAuth.removeAuthStateListener(listener)
         }
+    }.onStart {
+        emit(getCurrentUser())
+
+        Log.d("AUTH_DEBUG", "On app start: ${getCurrentUser()}")
     }
 
-    override suspend fun signInWithEmail(email: String, password: String): Result<Unit> =
-        suspendCancellableCoroutine { cont ->
-            firebaseAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    val user = firebaseAuth.currentUser?.toDomainUser()
-
-                    if (user != null && cont.isActive)
-                        cont.resume(Result.success(Unit))
-                    else if (cont.isActive)
-                        cont.resume(Result.failure(AuthError.Unknown("Login: Cannot get a user from Firebase!")))
-                }.addOnFailureListener { exc ->
-                    if (cont.isActive)
-                        cont.resume(Result.failure(errorMapper(exc)))
-                }
+    override suspend fun signInWithEmail(email: String, password: String): Result<Unit> {
+        if (email.isBlank() || password.isBlank()) {
+            return Result.failure(AuthError.EmptyCredentials())
         }
 
-    override suspend fun signInWithGoogle(idToken: String): Result<Unit> =
-        suspendCancellableCoroutine { cont ->
+        return try {
+            firebaseAuth.signInWithEmailAndPassword(email, password).await()
+
+            val user = firebaseAuth.currentUser?.toDomainUser()
+            if (user != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(AuthError.Unknown("Login: Cannot get a user from Firebase!"))
+            }
+
+        } catch (exc: Exception) {
+            if (exc is CancellationException) throw exc
+
+            Result.failure(errorMapper(exc))
+        }
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<Unit> {
+        return try {
             val credentials = GoogleAuthProvider.getCredential(idToken, null)
 
-            firebaseAuth.signInWithCredential(credentials)
-                .addOnSuccessListener {
-                    val user = firebaseAuth.currentUser?.toDomainUser()
+            firebaseAuth.signInWithCredential(credentials).await()
 
-                    if (user != null && cont.isActive)
-                        cont.resume(Result.success(Unit))
-                    else if (cont.isActive)
-                        cont.resume(Result.failure(AuthError.Unknown("Login: Cannot get a user from Firebase!")))
-                }
-                .addOnFailureListener { exc ->
-                    if (cont.isActive)
-                        cont.resume(Result.failure(errorMapper(exc)))
-                }
+            val user = firebaseAuth.currentUser?.toDomainUser()
+            if (user != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    AuthError.Unknown("Login: Cannot get a user from Firebase!")
+                )
+            }
+
+        } catch (exc: Exception) {
+            if (exc is CancellationException) throw exc
+
+            Result.failure(errorMapper(exc))
+        }
+    }
+
+    override suspend fun register(email: String, password: String): Result<Unit> {
+        if (email.isBlank() || password.isBlank()) {
+            return Result.failure(AuthError.EmptyCredentials())
         }
 
-    override suspend fun register(email: String, password: String): Result<Unit> =
-        suspendCancellableCoroutine { cont ->
-            firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    val user = firebaseAuth.currentUser?.toDomainUser()
+        return try {
+            firebaseAuth.createUserWithEmailAndPassword(email, password).await()
 
-                    if (user != null && cont.isActive)
-                        cont.resume(Result.success(Unit))
-                    else if (cont.isActive)
-                        cont.resume(Result.failure(AuthError.Unknown("Registration: Cannot get a user from Firebase!")))
-                }
-                .addOnFailureListener { exc ->
-                    if (cont.isActive)
-                        cont.resume(Result.failure(errorMapper(exc)))
-                }
+            val user = firebaseAuth.currentUser?.toDomainUser()
+            if (user != null) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    AuthError.Unknown("Registration: Cannot get a user from Firebase!")
+                )
+            }
+        } catch (exc: Exception) {
+            if (exc is CancellationException) throw exc
+
+            Result.failure(errorMapper(exc))
+        }
+    }
+
+    override suspend fun resetPassword(email: String): Result<Unit> {
+        if (email.isBlank()) {
+            return Result.failure(AuthError.EmptyCredentials())
         }
 
-    override suspend fun resetPassword(email: String): Result<Unit> =
-        suspendCancellableCoroutine { cont ->
-            firebaseAuth.sendPasswordResetEmail(email)
-                .addOnSuccessListener {
-                    if (cont.isActive)
-                        cont.resume(Result.success(Unit))
-                }
-                .addOnFailureListener { exc ->
-                    if (cont.isActive)
-                        cont.resume(Result.failure(errorMapper(exc)))
-                }
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (exc: Exception) {
+            if (exc is CancellationException) throw exc
+
+            Result.failure(errorMapper(exc))
         }
+    }
 
     override fun logout() {
         firebaseAuth.signOut()

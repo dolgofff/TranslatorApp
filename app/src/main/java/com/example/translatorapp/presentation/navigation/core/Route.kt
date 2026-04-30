@@ -1,4 +1,4 @@
-package com.example.translatorapp.presentation.navigation
+package com.example.translatorapp.presentation.navigation.core
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

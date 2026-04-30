@@ -40,10 +40,30 @@ class LoginViewModel @Inject constructor(
     }
 
     fun signInEmail(onSuccess: () -> Unit) {
+        val email = _loginState.value.email
+        val password = _loginState.value.password
+
+        when {
+            email.isBlank() && password.isBlank() -> {
+                _loginState.update { it.copy(errorMessage = "Please, enter credentials") }
+                return
+            }
+
+            email.isBlank() -> {
+                _loginState.update { it.copy(errorMessage = "Please, enter email") }
+                return
+            }
+
+            password.isBlank() -> {
+                _loginState.update { it.copy(errorMessage = "Please, enter password") }
+                return
+            }
+        }
+
         viewModelScope.launch {
             val result = signInEmailUseCase(
-                email = _loginState.value.email,
-                password = _loginState.value.password
+                email = email,
+                password = password
             )
 
             result.onSuccess { _ ->
@@ -55,7 +75,7 @@ class LoginViewModel @Inject constructor(
 
                     _loginState.update {
                         LoginState(
-                            email = _loginState.value.email,
+                            email = email,
                             errorMessage = authError.toUiMessage()
                         )
                     }
@@ -72,11 +92,13 @@ class LoginViewModel @Inject constructor(
                 onSuccess()
             }
                 .onFailure { error ->
-                    val authError = error as? AuthError ?: AuthError.Unknown(error.message)
-
-                    _loginState.update { LoginState(errorMessage = authError.toUiMessage()) }
+                    _loginState.update { LoginState(errorMessage = error.toUiMessage()) }
                 }
         }
+    }
+
+    fun onGoogleSignInFailed() {
+        _loginState.update { it.copy(errorMessage = "Sign in cancelled or unavailable") }
     }
 
     fun resetPassword() {

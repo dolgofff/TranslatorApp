@@ -39,11 +39,37 @@ class RegistrationViewModel @Inject constructor(private val registrationUseCase:
     }
 
     fun register(onSuccess: () -> Unit) {
+        val email = _registrationState.value.email
+        val password = _registrationState.value.password
+        val confirmPassword = _registrationState.value.confirmPassword
+
+        when {
+            email.isBlank() && password.isBlank() && confirmPassword.isBlank() -> {
+                _registrationState.update { it.copy(errorMessage = "Please, enter credentials") }
+                return
+            }
+
+            email.isBlank() -> {
+                _registrationState.update { it.copy(errorMessage = "Please, enter email") }
+                return
+            }
+
+            password.isBlank() -> {
+                _registrationState.update { it.copy(errorMessage = "Please, enter password") }
+                return
+            }
+
+            confirmPassword.isBlank() -> {
+                _registrationState.update { it.copy(errorMessage = "Please, confirm your password") }
+                return
+            }
+        }
+
         viewModelScope.launch {
             val result = registrationUseCase(
-                email = _registrationState.value.email,
-                password = _registrationState.value.password,
-                confirmPassword = _registrationState.value.confirmPassword
+                email = email,
+                password = password,
+                confirmPassword = confirmPassword
             )
 
             result.onSuccess { _ ->
@@ -55,7 +81,7 @@ class RegistrationViewModel @Inject constructor(private val registrationUseCase:
 
                     _registrationState.update {
                         RegistrationState(
-                            email = _registrationState.value.email,
+                            email = email,
                             errorMessage = authError.toUiMessage()
                         )
                     }

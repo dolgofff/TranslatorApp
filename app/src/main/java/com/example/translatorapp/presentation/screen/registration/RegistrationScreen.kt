@@ -2,6 +2,7 @@ package com.example.translatorapp.presentation.screen.registration
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,7 +26,9 @@ fun RegistrationScreen(
 ) {
     val state by viewmodel.registrationState.collectAsStateWithLifecycle()
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        contentWindowInsets = WindowInsets(0)
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -42,7 +45,7 @@ fun RegistrationScreen(
             RegistrationForm(
                 email = state.email,
                 onEmailChange = viewmodel::updateEmailText,
-                password = state.email,
+                password = state.password,
                 onPasswordChange = viewmodel::updatePasswordText,
                 passwordVisible = state.visibility1,
                 onPasswordVisibilityChange = viewmodel::togglePasswordVisibility1,

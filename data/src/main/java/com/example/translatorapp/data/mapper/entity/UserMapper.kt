@@ -1,10 +1,9 @@
-package com.example.translatorapp.data.mapper
+package com.example.translatorapp.data.mapper.entity
 
 import com.example.translatorapp.domain.model.User
 import com.google.firebase.auth.FirebaseUser
 
 fun FirebaseUser.toDomainUser(): User {
-
     return User(
         id = uid,
         email = email,

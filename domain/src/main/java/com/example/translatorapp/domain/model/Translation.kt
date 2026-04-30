@@ -8,8 +8,10 @@ data class Translation(
     val id: String,
     val sourceText: String,
     val translatedText: String,
-    val sourceLanguage: String,
-    val targetLanguage: String,
+    val sourceLanguage: LanguageCode,
+    val targetLanguage: LanguageCode,
     val timestamp: Instant,
     val isFavourite: Boolean,
+    val sourceAudioUrl: String? = null,
+    val destinationAudioUrl: String? = null,
 )

@@ -1,6 +1,7 @@
-package com.example.translatorapp.presentation.navigation
+package com.example.translatorapp.presentation.navigation.core
 
 import androidx.navigation3.runtime.NavBackStack
+import com.example.translatorapp.presentation.navigation.core.Route
 
 class Navigator(
     private val backStack: NavBackStack<Route>,

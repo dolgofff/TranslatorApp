@@ -1,114 +1,110 @@
 package com.example.translatorapp.presentation.di
 
-import com.example.translatorapp.data.mapper.TranslationErrorMapperImpl
-import com.example.translatorapp.domain.error.TranslationErrorMapper
+import com.example.translatorapp.data.media.ExoAudioPlayer
 import com.example.translatorapp.domain.repository.AuthRepository
+import com.example.translatorapp.domain.repository.GlobalRepository
 import com.example.translatorapp.domain.repository.TranslationRepository
-import com.example.translatorapp.domain.usecase.authorization.GetCurrentUserUseCase
+import com.example.translatorapp.domain.repository.TranslatorRepository
+import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
 import com.example.translatorapp.domain.usecase.authorization.AuthStateUseCase
+import com.example.translatorapp.domain.usecase.authorization.GetCurrentUserUseCase
 import com.example.translatorapp.domain.usecase.authorization.LogOutUseCase
 import com.example.translatorapp.domain.usecase.authorization.RegistrationUseCase
 import com.example.translatorapp.domain.usecase.authorization.ResetPasswordUseCase
 import com.example.translatorapp.domain.usecase.authorization.SignInEmailUseCase
 import com.example.translatorapp.domain.usecase.authorization.SignInGoogleUseCase
+import com.example.translatorapp.domain.usecase.dataStore.ObservePreferencesUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguageUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
 import com.example.translatorapp.domain.usecase.translation.ClearHistoryUseCase
 import com.example.translatorapp.domain.usecase.translation.DeleteTranslationUseCase
 import com.example.translatorapp.domain.usecase.translation.ObserveFavouritesUseCase
 import com.example.translatorapp.domain.usecase.translation.ObserveTranslationsUseCase
 import com.example.translatorapp.domain.usecase.translation.SaveTranslationUseCase
 import com.example.translatorapp.domain.usecase.translation.ToggleFavouriteUseCase
+import com.example.translatorapp.domain.usecase.translation.TranslateTextUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import jakarta.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 class DomainModule {
     // Authorization UseCases
     @Provides
-    @Singleton
     fun provideRegistrationUseCase(authRepository: AuthRepository): RegistrationUseCase =
         RegistrationUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideLogOutUseCase(authRepository: AuthRepository): LogOutUseCase =
         LogOutUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideSignInEmailUseCase(authRepository: AuthRepository): SignInEmailUseCase =
         SignInEmailUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideSignInGoogleUseCase(authRepository: AuthRepository): SignInGoogleUseCase =
         SignInGoogleUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideGetCurrentUserUseCase(authRepository: AuthRepository): GetCurrentUserUseCase =
         GetCurrentUserUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideObserveAuthStateUseCase(authRepository: AuthRepository): AuthStateUseCase =
         AuthStateUseCase(authRepository)
 
     @Provides
-    @Singleton
     fun provideResetPasswordUseCase(authRepository: AuthRepository): ResetPasswordUseCase =
         ResetPasswordUseCase(authRepository)
 
     // Translation UseCases
     @Provides
-    @Singleton
-    fun provideTranslationErrorMapper(): TranslationErrorMapper = TranslationErrorMapperImpl()
+    fun provideDeleteTranslationUseCase(translationRepository: TranslationRepository): DeleteTranslationUseCase =
+        DeleteTranslationUseCase(translationRepository)
 
     @Provides
-    @Singleton
-    fun provideDeleteTranslationUseCase(
-        translationRepository: TranslationRepository,
-        translationErrorMapper: TranslationErrorMapper,
-    ): DeleteTranslationUseCase =
-        DeleteTranslationUseCase(translationRepository, translationErrorMapper)
+    fun provideSaveTranslationUseCase(translationRepository: TranslationRepository): SaveTranslationUseCase =
+        SaveTranslationUseCase(translationRepository)
 
     @Provides
-    @Singleton
-    fun provideSaveTranslationUseCase(
-        translationRepository: TranslationRepository,
-        translationErrorMapper: TranslationErrorMapper,
-    ): SaveTranslationUseCase =
-        SaveTranslationUseCase(translationRepository, translationErrorMapper)
+    fun provideToggleFavouriteUseCase(translationRepository: TranslationRepository): ToggleFavouriteUseCase =
+        ToggleFavouriteUseCase(translationRepository)
 
     @Provides
-    @Singleton
-    fun provideToggleFavouriteUseCase(
-        translationRepository: TranslationRepository,
-        translationErrorMapper: TranslationErrorMapper,
-    ): ToggleFavouriteUseCase =
-        ToggleFavouriteUseCase(translationRepository, translationErrorMapper)
+    fun provideObserveTranslationsUseCase(translationRepository: TranslationRepository): ObserveTranslationsUseCase =
+        ObserveTranslationsUseCase(translationRepository)
 
     @Provides
-    @Singleton
-    fun provideObserveTranslationsUseCase(
-        translationRepository: TranslationRepository,
-        translationErrorMapper: TranslationErrorMapper,
-    ): ObserveTranslationsUseCase =
-        ObserveTranslationsUseCase(translationRepository, translationErrorMapper)
-
-    @Provides
-    @Singleton
     fun provideObserveFavouritesUseCase(observeTranslationsUseCase: ObserveTranslationsUseCase): ObserveFavouritesUseCase =
         ObserveFavouritesUseCase(translationsFlow = observeTranslationsUseCase)
 
     @Provides
-    @Singleton
-    fun provideClearHistoryUseCase(
-        translationRepository: TranslationRepository,
-        translationErrorMapper: TranslationErrorMapper,
-    ): ClearHistoryUseCase =
-        ClearHistoryUseCase(translationRepository, translationErrorMapper)
+    fun provideClearHistoryUseCase(translationRepository: TranslationRepository): ClearHistoryUseCase =
+        ClearHistoryUseCase(translationRepository)
+
+    @Provides
+    fun provideTranslateTextUseCase(translatorRepository: TranslatorRepository): TranslateTextUseCase =
+        TranslateTextUseCase(translatorRepository)
+
+    // Persistent data UseCases
+    @Provides
+    fun provideSetSourceLanguageUseCase(globalRepository: GlobalRepository): SetSourceLanguageUseCase =
+        SetSourceLanguageUseCase(globalRepository)
+
+    @Provides
+    fun provideSetDestinationLanguageUseCase(globalRepository: GlobalRepository): SetDestinationLanguageUseCase =
+        SetDestinationLanguageUseCase(globalRepository)
+
+    @Provides
+    fun provideObservePreferencesUseCase(globalRepository: GlobalRepository): ObservePreferencesUseCase =
+        ObservePreferencesUseCase(globalRepository)
+
+    // Media UseCases
+    @Provides
+    fun providePlayAudioUseCase(audioPlayer: ExoAudioPlayer): PlayAudioUseCase =
+        PlayAudioUseCase(audioPlayer)
+
 }

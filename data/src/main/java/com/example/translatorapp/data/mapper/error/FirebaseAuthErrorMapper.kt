@@ -1,4 +1,4 @@
-package com.example.translatorapp.data.mapper
+package com.example.translatorapp.data.mapper.error
 
 import com.example.translatorapp.domain.error.AuthError
 import com.google.android.gms.common.api.ApiException
@@ -11,12 +11,11 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 class FirebaseAuthErrorMapper {
-    operator fun invoke(exc: Throwable): AuthError {
+    operator fun invoke(exc: Exception): AuthError {
         return when (exc) {
             is FirebaseAuthUserCollisionException -> AuthError.EmailAlreadyInUse()
 
             is FirebaseAuthWeakPasswordException -> AuthError.WeakPassword()
-
 
             is FirebaseAuthInvalidUserException -> when (exc.errorCode) {
                 "ERROR_USER_NOT_FOUND" -> AuthError.UserNotFound()
