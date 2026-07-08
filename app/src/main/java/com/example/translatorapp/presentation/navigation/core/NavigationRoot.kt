@@ -11,8 +11,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
-import com.example.translatorapp.presentation.navigation.core.Navigator
-import com.example.translatorapp.presentation.navigation.core.Route
 import com.example.translatorapp.presentation.navigation.auth.AuthState
 import com.example.translatorapp.presentation.screen.camera.CameraScreen
 import com.example.translatorapp.presentation.screen.favourites.FavouritesScreen
