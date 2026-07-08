@@ -5,7 +5,7 @@ import com.example.translatorapp.data.mapper.entity.toDomainTranslation
 import com.example.translatorapp.data.mapper.error.ApiErrorMapper
 import com.example.translatorapp.data.network.api.TranslationApi
 import com.example.translatorapp.domain.error.TranslationError
-import com.example.translatorapp.domain.model.LanguageCode
+import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.Translation
 import com.example.translatorapp.domain.repository.TranslatorRepository
 import kotlinx.coroutines.delay

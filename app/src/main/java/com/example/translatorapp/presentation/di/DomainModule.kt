@@ -1,11 +1,14 @@
 package com.example.translatorapp.presentation.di
 
-import com.example.translatorapp.data.media.ExoAudioPlayer
+import com.example.translatorapp.data.media.speech.ExoAudioPlayer
+import com.example.translatorapp.domain.media.VoiceRecognizer
 import com.example.translatorapp.domain.repository.AuthRepository
 import com.example.translatorapp.domain.repository.GlobalRepository
 import com.example.translatorapp.domain.repository.TranslationRepository
 import com.example.translatorapp.domain.repository.TranslatorRepository
 import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
+import com.example.translatorapp.domain.usecase.audio.StartVoiceRecognitionUseCase
+import com.example.translatorapp.domain.usecase.audio.StopVoiceRecognitionUseCase
 import com.example.translatorapp.domain.usecase.authorization.AuthStateUseCase
 import com.example.translatorapp.domain.usecase.authorization.GetCurrentUserUseCase
 import com.example.translatorapp.domain.usecase.authorization.LogOutUseCase
@@ -30,7 +33,7 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-class DomainModule {
+object DomainModule {
     // Authorization UseCases
     @Provides
     fun provideRegistrationUseCase(authRepository: AuthRepository): RegistrationUseCase =
@@ -107,4 +110,12 @@ class DomainModule {
     fun providePlayAudioUseCase(audioPlayer: ExoAudioPlayer): PlayAudioUseCase =
         PlayAudioUseCase(audioPlayer)
 
+    @Provides
+    fun provideStartVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StartVoiceRecognitionUseCase =
+        StartVoiceRecognitionUseCase(voiceRecognizer)
+
+
+    @Provides
+    fun provideStopVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StopVoiceRecognitionUseCase =
+        StopVoiceRecognitionUseCase(voiceRecognizer)
 }

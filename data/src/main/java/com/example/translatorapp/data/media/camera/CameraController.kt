@@ -1,0 +1,58 @@
+package com.example.translatorapp.data.media.camera
+
+import android.content.Context
+import androidx.camera.core.Camera
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.concurrent.futures.await
+import androidx.lifecycle.LifecycleOwner
+import java.util.concurrent.ExecutorService
+
+class CameraController(
+    private val context: Context,
+    private val frameAnalyzer: FrameAnalyzer,
+    private val cameraExecutor: ExecutorService,
+) {
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var camera: Camera? = null
+    private var preview: Preview? = null
+    private var imageAnalysis: ImageAnalysis? = null
+
+    suspend fun bind(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
+        cameraProvider = ProcessCameraProvider.getInstance(context).await()
+
+        preview = Preview.Builder().build()
+        preview?.surfaceProvider = previewView.surfaceProvider
+
+        imageAnalysis = ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+
+
+        imageAnalysis?.setAnalyzer(cameraExecutor) { image ->
+            frameAnalyzer.process(image)
+        }
+
+        cameraProvider?.unbindAll()
+        camera = cameraProvider?.bindToLifecycle(
+            lifecycleOwner = lifecycleOwner,
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+            preview,
+            imageAnalysis
+        )
+    }
+
+    fun setTorch(enabled: Boolean) {
+        camera?.cameraControl?.enableTorch(enabled)
+    }
+
+    fun unbind() {
+        cameraProvider?.unbindAll()
+        camera = null
+        preview = null
+        imageAnalysis = null
+    }
+}

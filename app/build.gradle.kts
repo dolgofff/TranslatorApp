@@ -59,6 +59,9 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Camera dependency
+    implementation(libs.camerax.view)
+
     // Navigation3 dependencies
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)

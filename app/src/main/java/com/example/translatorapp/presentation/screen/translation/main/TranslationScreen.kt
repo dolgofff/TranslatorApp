@@ -1,5 +1,6 @@
 package com.example.translatorapp.presentation.screen.translation.main
 
+import android.Manifest
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.translatorapp.presentation.common.rememberPermissionHandler
 import com.example.translatorapp.presentation.screen.translation.account.AccountBottomSheet
 import com.example.translatorapp.presentation.screen.translation.account.AccountViewModel
 import com.example.translatorapp.presentation.ui.components.BottomActionsBar
@@ -49,6 +51,11 @@ fun TranslationScreen(
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val requestRecordAudioPermission = rememberPermissionHandler(
+        permission = Manifest.permission.RECORD_AUDIO,
+        onPermissionGranted = translationViewModel::startVoiceRecognition
+    )
+
     LaunchedEffect(translationState.errorMessage) {
         translationState.errorMessage?.let { snackbarHostState.showSnackbar(message = it) }
 
@@ -73,7 +80,16 @@ fun TranslationScreen(
         },
         bottomBar = {
             if (uiMode == TranslationUiMode.IDLE) {
-                BottomActionsBar(onHistoryClick = onHistoryNavClick)
+                BottomActionsBar(
+                    onHistoryClick = onHistoryNavClick,
+                    isRecording = translationState.isRecording,
+                    onAudioButtonClick = {
+                        if (translationState.isRecording)
+                            translationViewModel.stopVoiceRecognition()
+                        else
+                            requestRecordAudioPermission()
+                    }
+                )
             }
         },
         contentWindowInsets = WindowInsets.ime,

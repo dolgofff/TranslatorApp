@@ -1,6 +1,6 @@
 package com.example.translatorapp.data.di
 
-import com.example.translatorapp.data.media.ExoAudioPlayer
+import com.example.translatorapp.data.media.speech.ExoAudioPlayer
 import com.example.translatorapp.domain.media.AudioPlayer
 import dagger.Binds
 import dagger.Module

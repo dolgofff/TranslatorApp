@@ -1,4 +1,4 @@
-package com.example.translatorapp.data.media
+package com.example.translatorapp.data.media.speech
 
 import android.content.Context
 import androidx.annotation.OptIn

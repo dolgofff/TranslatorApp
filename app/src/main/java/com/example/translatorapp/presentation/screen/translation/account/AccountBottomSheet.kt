@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.translatorapp.presentation.ui.theme.MainColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,23 +96,24 @@ fun AccountBottomSheet(
 
 @Composable
 private fun AccountSheetHeader(onDoneClick: () -> Unit) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Text(
             text = "Select an Account",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f)
+            style = MaterialTheme.typography.titleLarge, // увеличили размер
+            modifier = Modifier.align(Alignment.Center)
         )
 
         TextButton(
-            onClick = onDoneClick
+            onClick = onDoneClick,
+            modifier = Modifier.align(Alignment.CenterEnd)
         ) {
             Text(
                 text = "Done",
+                color = MainColor,
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -197,7 +199,7 @@ private fun AccountActionItem(
         Icon(
             imageVector = icon,
             contentDescription = "Account action",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MainColor
         )
 
         Spacer(modifier = Modifier.width(16.dp))

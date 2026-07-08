@@ -1,5 +1,6 @@
 package com.example.translatorapp.domain.model
 
+import com.example.translatorapp.domain.model.language.LanguageCode
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 

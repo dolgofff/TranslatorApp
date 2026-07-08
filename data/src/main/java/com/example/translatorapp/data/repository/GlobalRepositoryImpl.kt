@@ -2,8 +2,8 @@ package com.example.translatorapp.data.repository
 
 import androidx.datastore.core.DataStore
 import com.example.translatorapp.data.datastore.LanguagePreferences
-import com.example.translatorapp.domain.model.LanguageCode
-import com.example.translatorapp.domain.model.LanguageSavedSettings
+import com.example.translatorapp.domain.model.language.LanguageCode
+import com.example.translatorapp.domain.model.language.LanguageSavedSettings
 import com.example.translatorapp.domain.repository.GlobalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch

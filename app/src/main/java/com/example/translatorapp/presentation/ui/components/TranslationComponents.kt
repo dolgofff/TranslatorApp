@@ -100,10 +100,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.translatorapp.R
-import com.example.translatorapp.domain.model.LanguageCode
 import com.example.translatorapp.domain.model.Translation
-import com.example.translatorapp.presentation.mapper.formatDateTime
-import com.example.translatorapp.presentation.ui.theme.Black
+import com.example.translatorapp.domain.model.language.LanguageCode
+import com.example.translatorapp.presentation.common.formatDateTime
 import com.example.translatorapp.presentation.ui.theme.ButtonColor
 import com.example.translatorapp.presentation.ui.theme.MainColor
 import com.example.translatorapp.presentation.ui.theme.TranslationBoxColor
@@ -357,33 +356,6 @@ private fun PasteButton(onPaste: () -> Unit) {
     }
 }
 
-/*@Composable
-fun LanguageSelector(
-    sourceLanguage: String,
-    targetLanguage: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        LanguageChip(
-            language = sourceLanguage,
-            modifier = Modifier.weight(1f)
-        )
-
-        Spacer(Modifier.width(8.dp))
-
-        SwapButton()
-
-        Spacer(Modifier.width(8.dp))
-
-        LanguageChip(
-            language = targetLanguage,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}*/
-
 @Composable
 fun LanguageSelector(
     sourceLanguage: LanguageCode,
@@ -557,7 +529,11 @@ private fun SwapButton(
 }
 
 @Composable
-fun BottomActionsBar(onHistoryClick: () -> Unit) {
+fun BottomActionsBar(
+    onHistoryClick: () -> Unit,
+    isRecording: Boolean,
+    onAudioButtonClick: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -576,7 +552,7 @@ fun BottomActionsBar(onHistoryClick: () -> Unit) {
 
             Spacer(Modifier.width(32.dp))
 
-            AudioButton()
+            AudioButton(isRecording = isRecording, onClick = onAudioButtonClick)
 
             Spacer(Modifier.width(32.dp))
 
@@ -614,10 +590,8 @@ private fun SmallActionButton(
 }
 
 @Composable
-private fun AudioButton() {
-    var isRecording by remember { mutableStateOf(false) }
+private fun AudioButton(isRecording: Boolean, onClick: () -> Unit) {
     val infTranslation = rememberInfiniteTransition()
-
     val activationSound = remember {
         MediaActionSound().apply {
             load(MediaActionSound.START_VIDEO_RECORDING)
@@ -645,7 +619,8 @@ private fun AudioButton() {
                 scaleY = if (isRecording) pulseScale else 1f
             }
             .clickable {
-                isRecording = !isRecording
+                onClick()
+
                 if (isRecording) {
                     activationSound.play(MediaActionSound.START_VIDEO_RECORDING)
                 } else {
@@ -703,7 +678,7 @@ fun HistoryTopBar(onNavBackClick: () -> Unit, onClear: () -> Unit) {
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    tint = Black,
+                    tint = MainColor,
                     contentDescription = "Clear history"
                 )
             }
@@ -885,6 +860,7 @@ fun FavouritesTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Sort,
+                        tint = MainColor,
                         contentDescription = "Sort Favourites"
                     )
                 }
@@ -998,7 +974,7 @@ fun ButtonBack(onNavBackClick: () -> Unit) {
         Icon(
             imageVector = Icons.Default.ArrowBackIosNew,
             modifier = Modifier.size(20.dp),
-            tint = Black,
+            tint = MainColor,
             contentDescription = "Navigate back"
         )
 
@@ -1006,7 +982,7 @@ fun ButtonBack(onNavBackClick: () -> Unit) {
 
         Text(
             text = "Main screen",
-            color = Color.Black,
+            color = MainColor,
         )
     }
 }

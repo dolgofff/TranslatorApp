@@ -54,6 +54,13 @@ android {
 dependencies {
     implementation(project(":domain"))
 
+    // Camera dependencies
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.androidx.concurrent.futures.ktx)
+
     // Firebase dependencies
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore.ktx)
