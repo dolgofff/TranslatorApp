@@ -77,10 +77,7 @@ fun CameraPreview(
     }
 
     LaunchedEffect(previewView, lifecycleOwner) {
-        onStartCamera(
-            lifecycleOwner,
-            previewView
-        )
+        onStartCamera(lifecycleOwner, previewView)
     }
 
     DisposableEffect(previewView, lifecycleOwner) {

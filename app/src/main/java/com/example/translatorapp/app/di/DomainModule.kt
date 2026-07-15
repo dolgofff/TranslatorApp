@@ -1,4 +1,4 @@
-package com.example.translatorapp.presentation.di
+package com.example.translatorapp.app.di
 
 import com.example.translatorapp.data.media.speech.ExoAudioPlayer
 import com.example.translatorapp.domain.media.VoiceRecognizer
@@ -113,7 +113,6 @@ object DomainModule {
     @Provides
     fun provideStartVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StartVoiceRecognitionUseCase =
         StartVoiceRecognitionUseCase(voiceRecognizer)
-
 
     @Provides
     fun provideStopVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StopVoiceRecognitionUseCase =

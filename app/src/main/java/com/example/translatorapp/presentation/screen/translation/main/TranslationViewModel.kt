@@ -3,7 +3,7 @@ package com.example.translatorapp.presentation.screen.translation.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.translatorapp.domain.model.language.LanguageCode
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
 import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
 import com.example.translatorapp.domain.usecase.audio.StartVoiceRecognitionUseCase
@@ -31,8 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
-@FlowPreview
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class TranslationViewModel @Inject constructor(
     private val translateTextUseCase: TranslateTextUseCase,

@@ -1,6 +1,7 @@
 package com.example.translatorapp.data.mapper.entity
 
-import com.example.translatorapp.domain.model.Translation
+import android.os.Build
+import com.example.translatorapp.domain.model.base.Translation
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -14,7 +15,11 @@ object TranslationIdGenerator {
     }
 
     private fun getTodayDateString(): String {
-        val zone = ZoneId.systemDefault()
+        val zone = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ZoneId.systemDefault()
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
         val today = LocalDate.now(zone)
 
         return "${today.year}-${

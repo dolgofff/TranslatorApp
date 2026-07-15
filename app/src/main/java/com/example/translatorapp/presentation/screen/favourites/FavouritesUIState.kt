@@ -1,6 +1,6 @@
 package com.example.translatorapp.presentation.screen.favourites
 
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 
 sealed class FavouritesUIState {
     data class Error(val errorMessage: String) : FavouritesUIState()

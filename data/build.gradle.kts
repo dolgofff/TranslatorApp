@@ -54,6 +54,9 @@ android {
 dependencies {
     implementation(project(":domain"))
 
+    //ML kit dependencies
+    implementation(libs.text.recognition)
+
     // Camera dependencies
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)

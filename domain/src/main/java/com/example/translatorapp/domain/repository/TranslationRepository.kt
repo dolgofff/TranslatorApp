@@ -1,6 +1,6 @@
 package com.example.translatorapp.domain.repository
 
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 import kotlinx.coroutines.flow.Flow
 
 interface TranslationRepository {

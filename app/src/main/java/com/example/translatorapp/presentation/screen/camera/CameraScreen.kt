@@ -18,9 +18,9 @@ import com.example.translatorapp.presentation.ui.components.TranslationOverlay
 import com.example.translatorapp.presentation.ui.components.TransparentLanguageSelector
 
 /*
-onSwapLanguages: () -> Unit = {},
 onGalleryClick: () -> Unit = {},
 onCaptureClick: () -> Unit = {},
+onSwapLanguages: () -> Unit = {},
 */
 @Composable
 fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackClick: () -> Unit) {

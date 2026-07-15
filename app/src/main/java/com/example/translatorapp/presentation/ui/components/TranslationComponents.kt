@@ -100,7 +100,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.translatorapp.R
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.presentation.common.formatDateTime
 import com.example.translatorapp.presentation.ui.theme.ButtonColor

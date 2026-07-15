@@ -3,7 +3,7 @@ package com.example.translatorapp.data.mapper.entity
 import com.example.translatorapp.data.entity.TranslationEntity
 import com.example.translatorapp.data.network.dto.TranslationResponse
 import com.example.translatorapp.domain.model.language.LanguageCode
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

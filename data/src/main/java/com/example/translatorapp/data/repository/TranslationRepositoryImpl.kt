@@ -5,7 +5,7 @@ import com.example.translatorapp.data.mapper.entity.toDomainTranslation
 import com.example.translatorapp.data.mapper.entity.toEntityTranslation
 import com.example.translatorapp.data.mapper.error.FirebaseTranslationErrorMapper
 import com.example.translatorapp.domain.error.TranslationError
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
 import com.example.translatorapp.domain.repository.TranslationRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

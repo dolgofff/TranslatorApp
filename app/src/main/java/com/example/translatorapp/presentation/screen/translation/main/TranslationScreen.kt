@@ -32,9 +32,7 @@ import com.example.translatorapp.presentation.ui.components.BottomActionsBar
 import com.example.translatorapp.presentation.ui.components.LanguageSelector
 import com.example.translatorapp.presentation.ui.components.TranslationCard
 import com.example.translatorapp.presentation.ui.components.TranslationTopBar
-import kotlinx.coroutines.FlowPreview
 
-@OptIn(FlowPreview::class)
 @Composable
 fun TranslationScreen(
     accountViewModel: AccountViewModel = hiltViewModel(),

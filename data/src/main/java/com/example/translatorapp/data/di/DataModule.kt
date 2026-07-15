@@ -8,8 +8,6 @@ import com.example.translatorapp.data.mapper.error.ApiErrorMapper
 import com.example.translatorapp.data.mapper.error.FirebaseAuthErrorMapper
 import com.example.translatorapp.data.mapper.error.FirebaseTranslationErrorMapper
 import com.example.translatorapp.data.mapper.error.VoiceRecognitionErrorMapper
-import com.example.translatorapp.data.media.camera.CameraController
-import com.example.translatorapp.data.media.camera.FrameAnalyzer
 import com.example.translatorapp.data.media.speech.AndroidVoiceRecognizer
 import com.example.translatorapp.data.network.api.TranslationApi
 import com.example.translatorapp.data.repository.AuthRepositoryImpl
@@ -27,11 +25,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ActivityRetainedScoped
-import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.components.SingletonComponent
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -103,20 +97,4 @@ object DataModule {
         @ApplicationContext context: Context,
         errorMapper: VoiceRecognitionErrorMapper,
     ): VoiceRecognizer = AndroidVoiceRecognizer(context, errorMapper)
-
-    @Provides
-    @Singleton
-    fun provideFrameProcessor(): FrameAnalyzer = FrameAnalyzer()
-
-    @Provides
-    @Singleton
-    fun provideCameraExecutor(): ExecutorService = Executors.newSingleThreadExecutor()
-
-    @Provides
-    @ActivityRetainedScoped
-    fun provideCameraController(
-        @ApplicationContext context: Context,
-        frameAnalyzer: FrameAnalyzer,
-        cameraExecutor: ExecutorService,
-    ): CameraController = CameraController(context, frameAnalyzer, cameraExecutor)
 }

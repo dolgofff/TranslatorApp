@@ -1,14 +1,18 @@
 package com.example.translatorapp.data.media.camera
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.concurrent.futures.await
 import androidx.lifecycle.LifecycleOwner
+import com.example.translatorapp.domain.model.ml.RecognizedText
+import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.ExecutorService
 
 class CameraController(
@@ -16,11 +20,14 @@ class CameraController(
     private val frameAnalyzer: FrameAnalyzer,
     private val cameraExecutor: ExecutorService,
 ) {
+    val recognizedText: StateFlow<RecognizedText?> = frameAnalyzer.recognizedText
+
     private var cameraProvider: ProcessCameraProvider? = null
     private var camera: Camera? = null
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
 
+    @OptIn(ExperimentalGetImage::class)
     suspend fun bind(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         cameraProvider = ProcessCameraProvider.getInstance(context).await()
 

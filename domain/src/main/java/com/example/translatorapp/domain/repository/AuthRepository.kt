@@ -1,6 +1,6 @@
 package com.example.translatorapp.domain.repository
 
-import com.example.translatorapp.domain.model.User
+import com.example.translatorapp.domain.model.base.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {

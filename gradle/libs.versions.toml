@@ -36,6 +36,7 @@ credentialsPlayServicesAuth = "1.5.0"
 googleid = "1.2.0"
 androidxAnnotationExperimental = "1.5.1"
 camerax = "1.6.1"
+textRecognition = "19.0.1"
 
 [libraries]
 ### Camera
@@ -110,6 +111,9 @@ androidx-exoplayer = {module = "androidx.media3:media3-exoplayer", version.ref =
 
 ## Fix for serialization bug
 androidx-annotation-experimental = { group = "androidx.annotation", name = "annotation-experimental", version.ref = "androidxAnnotationExperimental" }
+
+## ML Kit
+text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "textRecognition" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
