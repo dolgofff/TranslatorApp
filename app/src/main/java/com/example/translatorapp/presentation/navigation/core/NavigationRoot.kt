@@ -127,6 +127,9 @@ private fun MainNavHost(startDestination: Route) {
                     onHistoryNavClick = {
                         navigator.navigate(Route.HistoryRoute)
                     },
+                    onCameraNavClick = {
+                        navigator.navigate(Route.CameraRoute)
+                    },
                     onFavouritesNavClick = {
                         navigator.navigate(Route.FavouritesRoute)
                     }

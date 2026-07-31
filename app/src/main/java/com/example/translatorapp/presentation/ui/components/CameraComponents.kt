@@ -1,9 +1,12 @@
 package com.example.translatorapp.presentation.ui.components
 
+import android.content.Context
+import android.util.Log
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
@@ -48,8 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,16 +62,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.translatorapp.domain.model.language.LanguageCode
+import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
+import com.example.translatorapp.domain.model.ml.RecognizedText
 import com.example.translatorapp.presentation.ui.theme.White
 import kotlinx.coroutines.delay
 
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
+    context: Context,
     onStartCamera: suspend (LifecycleOwner, PreviewView) -> Unit,
     onStopCamera: () -> Unit,
 ) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val previewView = remember {
@@ -93,8 +99,41 @@ fun CameraPreview(
 }
 
 @Composable
-fun TranslationOverlay() {
-    Box(modifier = Modifier.fillMaxSize())
+fun CameraOverlay(
+    recognizedText: RecognizedText?,
+    blocks: List<DisplayedTextBlock>,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val recognized = recognizedText ?: return@Canvas
+
+        val scaleX = size.width / recognized.width.toFloat()
+        val scaleY = size.height / recognized.height.toFloat()
+
+        Log.d(
+            "Overlay",
+            "canvas=${size.width}x${size.height}, image=${recognized.width}x${recognized.height}"
+        )
+
+        blocks.forEach { block ->
+            val bounds = block.bounds ?: return@forEach
+
+            Log.d("Overlay2", "bounds=$bounds")
+
+            drawRect(
+                color = Color.Red,
+                topLeft = Offset(
+                    x = bounds.left * scaleX,
+                    y = bounds.top * scaleY
+                ),
+                size = Size(
+                    width = (bounds.right - bounds.left) * scaleX,
+                    height = (bounds.bottom - bounds.top) * scaleY
+                ),
+                style = Stroke(width = 3f)
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,10 +177,10 @@ fun CameraTopBar(
 fun TransparentLanguageSelector(
     modifier: Modifier = Modifier,
     sourceLanguage: LanguageCode,
-    targetLanguage: LanguageCode,
+    destinationLanguage: LanguageCode,
     languageList: List<LanguageCode>,
     onSourceLanguageChange: (LanguageCode) -> Unit,
-    onTargetLanguageChange: (LanguageCode) -> Unit,
+    onDestinationLanguageChange: (LanguageCode) -> Unit,
     onSwapLanguages: () -> Unit,
 ) {
     var isSwapping by remember { mutableStateOf(false) }
@@ -170,7 +209,7 @@ fun TransparentLanguageSelector(
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TransparentLanguageChip(
@@ -178,14 +217,14 @@ fun TransparentLanguageSelector(
                     .offset(x = offset),
                 language = sourceLanguage,
                 languageList = languageList,
-                onSelected = { if (it.code != targetLanguage.code) onSourceLanguageChange(it) }
+                onSelected = { if (it.code != destinationLanguage.code) onSourceLanguageChange(it) }
             )
 
             Spacer(Modifier.width(4.dp))
 
             IconButton(
                 onClick = {
-                    if (!isSwapping && sourceLanguage.code != targetLanguage.code)
+                    if (!isSwapping && sourceLanguage.code != destinationLanguage.code)
                         isSwapping = true
                 }
             ) {
@@ -201,11 +240,11 @@ fun TransparentLanguageSelector(
             TransparentLanguageChip(
                 modifier = Modifier
                     .offset(x = -offset),
-                language = targetLanguage,
+                language = destinationLanguage,
                 languageList = languageList,
                 onSelected = {
                     if (it.code != sourceLanguage.code)
-                        onTargetLanguageChange(it)
+                        onDestinationLanguageChange(it)
                 }
             )
         }

@@ -39,6 +39,7 @@ fun TranslationScreen(
     translationViewModel: TranslationViewModel = hiltViewModel(),
     onHistoryNavClick: () -> Unit,
     onFavouritesNavClick: () -> Unit,
+    onCameraNavClick: () -> Unit,
 ) {
     val userState by accountViewModel.userState.collectAsStateWithLifecycle()
     val translationState by translationViewModel.translationState.collectAsStateWithLifecycle()
@@ -79,7 +80,8 @@ fun TranslationScreen(
         bottomBar = {
             if (uiMode == TranslationUiMode.IDLE) {
                 BottomActionsBar(
-                    onHistoryClick = onHistoryNavClick,
+                    onHistoryNavClick = onHistoryNavClick,
+                    onCameraNavClick = onCameraNavClick,
                     isRecording = translationState.isRecording,
                     onAudioButtonClick = {
                         if (translationState.isRecording)

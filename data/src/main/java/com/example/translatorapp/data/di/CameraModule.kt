@@ -36,6 +36,10 @@ object CameraModule {
 
     @Provides
     @Singleton
+    fun provideMlTextMapper(): MlTextMapper = MlTextMapper()
+
+    @Provides
+    @Singleton
     fun provideFrameAnalyzer(
         mlTextRecognizer: MLTextRecognizer,
         mapper: MlTextMapper,

@@ -1,5 +1,6 @@
 package com.example.translatorapp.data.media.camera
 
+import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.example.translatorapp.data.mapper.entity.MlTextMapper
@@ -8,9 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.atomic.AtomicBoolean
 
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-
-@OptIn(ExperimentalAtomicApi::class)
 class FrameAnalyzer(
     private val mlTextRecognizer: MLTextRecognizer,
     private val mlTextMapper: MlTextMapper,
@@ -20,7 +18,7 @@ class FrameAnalyzer(
 
     private val isProcessing = AtomicBoolean(false)
 
-    @ExperimentalGetImage
+    @OptIn(ExperimentalGetImage::class)
     fun process(image: ImageProxy) {
         if (!isProcessing.compareAndSet(false, true)) {
             image.close()
@@ -30,7 +28,15 @@ class FrameAnalyzer(
         mlTextRecognizer.process(
             image = image,
             onTextRecognized = { mlText ->
-                _recognizedText.value = mlTextMapper.map(mlText)
+
+                val recognized = RecognizedText(
+                    width = image.width,
+                    height = image.height,
+                    rotationDegrees = image.imageInfo.rotationDegrees,
+                    blocks = mlTextMapper.map(mlText)
+                )
+
+                _recognizedText.value = recognized
             },
             onComplete = {
                 isProcessing.set(false)

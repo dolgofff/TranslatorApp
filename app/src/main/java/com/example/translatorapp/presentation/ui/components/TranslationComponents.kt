@@ -1,6 +1,7 @@
 package com.example.translatorapp.presentation.ui.components
 
 import android.media.MediaActionSound
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -530,7 +531,8 @@ private fun SwapButton(
 
 @Composable
 fun BottomActionsBar(
-    onHistoryClick: () -> Unit,
+    onHistoryNavClick: () -> Unit,
+    onCameraNavClick: () -> Unit,
     isRecording: Boolean,
     onAudioButtonClick: () -> Unit,
 ) {
@@ -545,7 +547,7 @@ fun BottomActionsBar(
             horizontalArrangement = Arrangement.Center
         ) {
             SmallActionButton(
-                onClick = onHistoryClick,
+                onClick = onHistoryNavClick,
                 icon = Icons.Default.History,
                 contentDescription = "History"
             )
@@ -557,7 +559,7 @@ fun BottomActionsBar(
             Spacer(Modifier.width(32.dp))
 
             SmallActionButton(
-                onClick = {},
+                onClick = onCameraNavClick,
                 icon = Icons.Default.CameraAlt,
                 contentDescription = "Camera"
             )
