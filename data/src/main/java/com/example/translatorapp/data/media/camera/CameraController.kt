@@ -1,10 +1,13 @@
 package com.example.translatorapp.data.media.camera
 
 import android.content.Context
+import androidx.camera.core.AspectRatio.RATIO_16_9
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.concurrent.futures.await
@@ -25,13 +28,26 @@ class CameraController(
     private var preview: Preview? = null
     private var imageAnalysis: ImageAnalysis? = null
 
+    private val resolutionSelector = ResolutionSelector.Builder()
+        .setAspectRatioStrategy(
+            AspectRatioStrategy(
+                RATIO_16_9,
+                AspectRatioStrategy.FALLBACK_RULE_AUTO
+            )
+        )
+        .build()
+
     suspend fun bind(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         cameraProvider = ProcessCameraProvider.getInstance(context).await()
 
-        preview = Preview.Builder().build()
+        preview = Preview.Builder()
+            .setResolutionSelector(resolutionSelector)
+            .build()
+
         preview?.surfaceProvider = previewView.surfaceProvider
 
         imageAnalysis = ImageAnalysis.Builder()
+            .setResolutionSelector(resolutionSelector)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
 
