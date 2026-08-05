@@ -71,7 +71,7 @@ import kotlinx.coroutines.delay
 fun CameraPreview(
     modifier: Modifier = Modifier,
     context: Context,
-    onStartCamera: suspend (LifecycleOwner, PreviewView) -> Unit,
+    onStartCamera: (LifecycleOwner, PreviewView) -> Unit,
     onStopCamera: () -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -105,30 +105,20 @@ fun CameraOverlay(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier) {
-        val recognized = recognizedText ?: return@Canvas
-
-        val scaleX = size.width / recognized.width.toFloat()
-        val scaleY = size.height / recognized.height.toFloat()
-
-        Log.d(
-            "Overlay",
-            "canvas=${size.width}x${size.height}, image=${recognized.width}x${recognized.height}"
-        )
-
         blocks.forEach { block ->
             val bounds = block.bounds ?: return@forEach
 
-            Log.d("Overlay2", "bounds=$bounds")
+            Log.d("Overlay Bounds", "bounds=$bounds canvas=$size")
 
             drawRect(
                 color = Color.Red,
                 topLeft = Offset(
-                    x = bounds.left * scaleX,
-                    y = bounds.top * scaleY
+                    x = bounds.left.toFloat(),
+                    y = bounds.top.toFloat()
                 ),
                 size = Size(
-                    width = (bounds.right - bounds.left) * scaleX,
-                    height = (bounds.bottom - bounds.top) * scaleY
+                    width = (bounds.right - bounds.left).toFloat(),
+                    height = (bounds.bottom - bounds.top).toFloat()
                 ),
                 style = Stroke(width = 3f)
             )

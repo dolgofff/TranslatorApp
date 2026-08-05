@@ -86,7 +86,7 @@ class CameraViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    suspend fun startCamera(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
+    fun startCamera(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         cameraController.bind(lifecycleOwner, previewView)
     }
 
