@@ -3,7 +3,6 @@ package com.example.translatorapp.data.media.camera
 import android.content.Context
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.view.CameraController.IMAGE_ANALYSIS
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.LifecycleOwner
@@ -24,7 +23,6 @@ class CameraController(
     fun bind(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         val controller = LifecycleCameraController(context)
 
-        controller.setEnabledUseCases(IMAGE_ANALYSIS)
         controller.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         controller.setImageAnalysisBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
         controller.setImageAnalysisAnalyzer(cameraExecutor, frameAnalyzer)

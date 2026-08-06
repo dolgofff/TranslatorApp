@@ -25,10 +25,20 @@ class FrameAnalyzer(
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
-        if (!isProcessing.compareAndSet(false, true)) {
+        if (!isProcessing.compareAndSet(false, true) || (transformMatrix == null)) {
             image.close()
             return
         }
+
+        Log.d(
+            "FrameAnalyzer",
+            """
+    image.width=${image.width}
+    image.height=${image.height}
+    cropRect=${image.cropRect}
+    rotation=${image.imageInfo.rotationDegrees}
+    """.trimIndent()
+        )
 
         mlTextRecognizer.process(
             image = image,
@@ -37,7 +47,7 @@ class FrameAnalyzer(
                     width = image.width,
                     height = image.height,
                     rotationDegrees = image.imageInfo.rotationDegrees,
-                    blocks = mlTextMapper.map(text = mlText, transformMatrix = transformMatrix)
+                    blocks = mlTextMapper.map(text = mlText, transformMatrix = transformMatrix,cropRect = image.cropRect)
                 )
 
                 _recognizedText.value = recognized
@@ -50,8 +60,6 @@ class FrameAnalyzer(
 
     override fun updateTransform(matrix: Matrix?) {
         transformMatrix = matrix
-
-        Log.d("FrameAnalyzer", "transformMatrix=$matrix")
     }
 
     override fun getTargetCoordinateSystem(): Int {

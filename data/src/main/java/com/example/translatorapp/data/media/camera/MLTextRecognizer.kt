@@ -24,6 +24,12 @@ class MLTextRecognizer(private val textRecognizer: TextRecognizer) {
         textRecognizer
             .process(inputImage)
             .addOnSuccessListener { result ->
+                Log.d("MLKit", "textBlocks=${result.textBlocks.size}")
+
+                result.textBlocks.firstOrNull()?.boundingBox?.let {
+                    Log.d("MLKit", "firstBox=$it")
+                }
+
                 onTextRecognized(result)
             }
             .addOnFailureListener {
