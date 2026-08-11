@@ -1,68 +1,46 @@
 package com.example.translatorapp.data.media.camera
 
-import android.graphics.Matrix
 import android.util.Log
-import androidx.annotation.OptIn
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
+import androidx.camera.mlkit.vision.MlKitAnalyzer
 import com.example.translatorapp.data.mapper.entity.MlTextMapper
 import com.example.translatorapp.domain.model.ml.RecognizedText
+import com.google.mlkit.vision.text.TextRecognizer
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.Executor
 
 class FrameAnalyzer(
-    private val mlTextRecognizer: MLTextRecognizer,
+    private val textRecognizer: TextRecognizer,
     private val mlTextMapper: MlTextMapper,
-) : ImageAnalysis.Analyzer {
+    cameraExecutor: Executor,
+) {
     private val _recognizedText = MutableStateFlow<RecognizedText?>(null)
-    val recognizedText = _recognizedText.asStateFlow()
+    val recognizedText: StateFlow<RecognizedText?> = _recognizedText.asStateFlow()
 
-    private var transformMatrix: Matrix? = null
+    val mlKitAnalyzer = MlKitAnalyzer(
+        listOf(textRecognizer),
+        ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED,
+        cameraExecutor
+    ) { result ->
+        Log.d("MlKitAnalyzer", "callback")
 
-    private val isProcessing = AtomicBoolean(false)
-
-    @OptIn(ExperimentalGetImage::class)
-    override fun analyze(image: ImageProxy) {
-        if (!isProcessing.compareAndSet(false, true) || (transformMatrix == null)) {
-            image.close()
-            return
-        }
+        val text = result.getValue(textRecognizer) ?: return@MlKitAnalyzer
 
         Log.d(
-            "FrameAnalyzer",
-            """
-    image.width=${image.width}
-    image.height=${image.height}
-    cropRect=${image.cropRect}
-    rotation=${image.imageInfo.rotationDegrees}
-    """.trimIndent()
-        )
-
-        mlTextRecognizer.process(
-            image = image,
-            onTextRecognized = { mlText ->
-                val recognized = RecognizedText(
-                    width = image.width,
-                    height = image.height,
-                    rotationDegrees = image.imageInfo.rotationDegrees,
-                    blocks = mlTextMapper.map(text = mlText, transformMatrix = transformMatrix,cropRect = image.cropRect)
-                )
-
-                _recognizedText.value = recognized
-            },
-            onComplete = {
-                isProcessing.set(false)
+            "OCR_RAW",
+            text.textBlocks.joinToString("\n") { block ->
+                "text='${block.text}', bounds=${block.boundingBox}"
             }
         )
-    }
 
-    override fun updateTransform(matrix: Matrix?) {
-        transformMatrix = matrix
-    }
+        Log.d("MlKitAnalyzer", "text=${text.text}, blocks=${text.textBlocks.size}")
 
-    override fun getTargetCoordinateSystem(): Int {
-        return ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED
+        val recognized = RecognizedText(blocks = mlTextMapper.map(text))
+
+        Log.d("FrameAnalyzer", "recognized blocks=${recognized.blocks.size}")
+
+        _recognizedText.value = recognized
     }
 }

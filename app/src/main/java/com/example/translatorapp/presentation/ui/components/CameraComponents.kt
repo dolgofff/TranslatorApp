@@ -1,7 +1,6 @@
 package com.example.translatorapp.presentation.ui.components
 
 import android.content.Context
-import android.util.Log
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
@@ -53,17 +52,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
-import com.example.translatorapp.domain.model.ml.RecognizedText
 import com.example.translatorapp.presentation.ui.theme.White
 import kotlinx.coroutines.delay
 
@@ -87,9 +91,7 @@ fun CameraPreview(
     }
 
     DisposableEffect(previewView, lifecycleOwner) {
-        onDispose {
-            onStopCamera()
-        }
+        onDispose { onStopCamera() }
     }
 
     AndroidView(
@@ -99,31 +101,71 @@ fun CameraPreview(
 }
 
 @Composable
-fun CameraOverlay(
-    recognizedText: RecognizedText?,
-    blocks: List<DisplayedTextBlock>,
-    modifier: Modifier = Modifier,
-) {
+fun CameraOverlay(blocks: List<DisplayedTextBlock>, modifier: Modifier = Modifier) {
+    val textMeasurer = rememberTextMeasurer()
+
     Canvas(modifier = modifier) {
         blocks.forEach { block ->
             val bounds = block.bounds ?: return@forEach
 
-            Log.d("Overlay Bounds", "bounds=$bounds canvas=$size")
+            val left = bounds.left.toFloat()
+            val top = bounds.top.toFloat()
+            val width = (bounds.right - bounds.left).toFloat()
+            val height = (bounds.bottom - bounds.top).toFloat()
+
+            if (width <= 0f || height <= 0f)
+                return@forEach
+
 
             drawRect(
-                color = Color.Red,
-                topLeft = Offset(
-                    x = bounds.left.toFloat(),
-                    y = bounds.top.toFloat()
-                ),
-                size = Size(
-                    width = (bounds.right - bounds.left).toFloat(),
-                    height = (bounds.bottom - bounds.top).toFloat()
-                ),
-                style = Stroke(width = 3f)
+                color = Color.White.copy(alpha = 0.9f),
+                topLeft = Offset(left, top),
+                size = Size(width, height)
+            )
+
+            val textLayoutResult = measureTextToFit(
+                textMeasurer = textMeasurer,
+                text = block.translatedText,
+                maxWidth = width.toInt(),
+                maxHeight = height.toInt()
+            )
+
+            val textTop = top + (height - textLayoutResult.size.height) / 2f
+
+            drawText(
+                textLayoutResult = textLayoutResult,
+                topLeft = Offset(x = left, y = textTop)
             )
         }
     }
+}
+
+private fun measureTextToFit(
+    textMeasurer: TextMeasurer,
+    text: String,
+    maxWidth: Int,
+    maxHeight: Int,
+): TextLayoutResult {
+    var fontSize = maxHeight.sp
+
+    while (fontSize.value >= 6f) {
+        val result = textMeasurer.measure(
+            text = text,
+            style = TextStyle(color = Color.Black, fontSize = fontSize),
+            constraints = Constraints(maxWidth = maxWidth)
+        )
+
+        if (result.size.width <= maxWidth && result.size.height <= maxHeight)
+            return result
+
+        fontSize = (fontSize.value - 1f).sp
+    }
+
+    return textMeasurer.measure(
+        text = text,
+        style = TextStyle(color = Color.Black, fontSize = 6.sp),
+        constraints = Constraints(maxWidth = maxWidth)
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

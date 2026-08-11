@@ -14,9 +14,11 @@ import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguage
 import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -35,55 +37,15 @@ class CameraViewModel @Inject constructor(
     private val setSourceLanguageUseCase: SetSourceLanguageUseCase,
     private val setDestinationLanguageUseCase: SetDestinationLanguageUseCase,
     private val cameraTextTranslator: CameraTextTranslator,
-    observePreferencesUseCase: ObservePreferencesUseCase,
+    private val observePreferencesUseCase: ObservePreferencesUseCase,
 ) : ViewModel() {
     private val _cameraState = MutableStateFlow(CameraState())
     val cameraState = _cameraState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            val settings = observePreferencesUseCase().first()
-            val savedSourceLanguage = settings.savedSourceLanguage
-            val savedDestinationLanguage = settings.savedDestinationLanguage
-
-            _cameraState.update { cur ->
-                if (cur.sourceLanguage == savedSourceLanguage && cur.destinationLanguage == savedDestinationLanguage) {
-                    return@update cur
-                }
-
-                cur.copy(
-                    sourceLanguage = savedSourceLanguage,
-                    destinationLanguage = savedDestinationLanguage
-                )
-            }
-        }
-
-        cameraController.recognizedText
-            .filterNotNull()
-            .map { recognized ->
-                recognized.blocks.joinToString("\n") { block ->
-                    block.text.trim()
-                } to recognized
-            }
-            .distinctUntilChanged { old, new ->
-                old.first == new.first
-            }
-            .map { it.second }
-            .mapLatest { recognized ->
-                val translatedBlocks = cameraTextTranslator.translate(
-                    recognizedText = recognized,
-                    sourceLanguage = cameraState.value.sourceLanguage,
-                    destinationLanguage = cameraState.value.destinationLanguage
-                )
-
-                recognized to translatedBlocks
-            }
-            .onEach { (recognized, translatedBlocks) ->
-                _cameraState.update {
-                    it.copy(recognizedText = recognized, translatedBlocks = translatedBlocks)
-                }
-            }
-            .launchIn(viewModelScope)
+        observeSavedLanguages()
+        observeRecognizedText()
+        observeTranslations()
     }
 
     fun startCamera(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
@@ -102,6 +64,85 @@ class CameraViewModel @Inject constructor(
         cameraController.setTorch(newState)
     }
 
+    private fun observeTranslations() {
+        cameraController.recognizedText
+            .filterNotNull()
+            .map { recognized ->
+                val state = _cameraState.value
+
+                TranslationRequest(
+                    recognizedText = recognized,
+                    textKey = recognized.blocks
+                        .joinToString("\n") { it.text.trim() }
+                        .trim(),
+                    sourceLanguage = state.sourceLanguage,
+                    destinationLanguage = state.destinationLanguage
+                )
+            }
+            .filter { it.textKey.isNotBlank() }
+            .distinctUntilChanged { old, new ->
+                old.textKey == new.textKey &&
+                        old.sourceLanguage == new.sourceLanguage &&
+                        old.destinationLanguage == new.destinationLanguage
+            }
+            .mapLatest { request ->
+                delay(700)
+
+                cameraTextTranslator.translate(
+                    recognizedText = request.recognizedText,
+                    sourceLanguage = request.sourceLanguage,
+                    destinationLanguage = request.destinationLanguage
+                )
+            }
+            .onEach {
+                refreshDisplayedBlocks()
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeRecognizedText() {
+        cameraController.recognizedText
+            .filterNotNull()
+            .onEach { recognized ->
+                val state = _cameraState.value
+
+                val displayedBlocks =
+                    cameraTextTranslator.getDisplayedBlocks(
+                        recognizedText = recognized,
+                        sourceLanguage = state.sourceLanguage,
+                        destinationLanguage = state.destinationLanguage
+                    )
+
+                _cameraState.update {
+                    it.copy(recognizedText = recognized, translatedBlocks = displayedBlocks)
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeSavedLanguages() {
+        viewModelScope.launch {
+            val settings = observePreferencesUseCase().first()
+
+            val savedSourceLanguage = settings.savedSourceLanguage
+            val savedDestinationLanguage = settings.savedDestinationLanguage
+
+            _cameraState.update { current ->
+                if (
+                    current.sourceLanguage == savedSourceLanguage &&
+                    current.destinationLanguage == savedDestinationLanguage
+                ) {
+                    current
+                } else {
+                    current.copy(
+                        sourceLanguage = savedSourceLanguage,
+                        destinationLanguage = savedDestinationLanguage
+                    )
+                }
+            }
+        }
+    }
+
     fun updateSourceLanguage(language: LanguageCode) {
         _cameraState.update { it.copy(sourceLanguage = language) }
 
@@ -109,6 +150,7 @@ class CameraViewModel @Inject constructor(
             setSourceLanguageUseCase(language.code)
 
             cameraTextTranslator.clearCache()
+            refreshDisplayedBlocks()
         }
     }
 
@@ -119,9 +161,9 @@ class CameraViewModel @Inject constructor(
             setDestinationLanguageUseCase(language.code)
 
             cameraTextTranslator.clearCache()
+            refreshDisplayedBlocks()
         }
     }
-
 
     fun onSwapLanguages() {
         val newSourceLanguage = _cameraState.value.destinationLanguage
@@ -139,8 +181,31 @@ class CameraViewModel @Inject constructor(
             setDestinationLanguageUseCase(newDestinationLanguage.code)
 
             cameraTextTranslator.clearCache()
+            refreshDisplayedBlocks()
         }
     }
+
+    private fun refreshDisplayedBlocks() {
+        val state = _cameraState.value
+        val recognized = state.recognizedText ?: return
+
+        val displayedBlocks = cameraTextTranslator.getDisplayedBlocks(
+            recognizedText = recognized,
+            sourceLanguage = state.sourceLanguage,
+            destinationLanguage = state.destinationLanguage
+        )
+
+        _cameraState.update {
+            it.copy(translatedBlocks = displayedBlocks)
+        }
+    }
+
+    private data class TranslationRequest(
+        val recognizedText: RecognizedText,
+        val textKey: String,
+        val sourceLanguage: LanguageCode,
+        val destinationLanguage: LanguageCode,
+    )
 
     data class CameraState(
         val recognizedText: RecognizedText? = null,

@@ -60,7 +60,6 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
         }
 
         CameraOverlay(
-            recognizedText = state.recognizedText,
             blocks = state.translatedBlocks,
             modifier = Modifier.fillMaxSize()
         )

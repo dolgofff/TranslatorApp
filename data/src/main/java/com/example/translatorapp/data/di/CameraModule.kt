@@ -4,7 +4,6 @@ import android.content.Context
 import com.example.translatorapp.data.mapper.entity.MlTextMapper
 import com.example.translatorapp.data.media.camera.CameraController
 import com.example.translatorapp.data.media.camera.FrameAnalyzer
-import com.example.translatorapp.data.media.camera.MLTextRecognizer
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -27,11 +26,6 @@ object CameraModule {
 
     @Provides
     @Singleton
-    fun provideMLTextRecognizer(recognizer: TextRecognizer): MLTextRecognizer =
-        MLTextRecognizer(recognizer)
-
-    @Provides
-    @Singleton
     fun provideCameraExecutor(): ExecutorService = Executors.newSingleThreadExecutor()
 
     @Provides
@@ -41,9 +35,10 @@ object CameraModule {
     @Provides
     @Singleton
     fun provideFrameAnalyzer(
-        mlTextRecognizer: MLTextRecognizer,
+        textRecognizer: TextRecognizer,
         mapper: MlTextMapper,
-    ): FrameAnalyzer = FrameAnalyzer(mlTextRecognizer, mapper)
+        cameraExecutor: ExecutorService,
+    ): FrameAnalyzer = FrameAnalyzer(textRecognizer, mlTextMapper = mapper, cameraExecutor)
 
     @Provides
     @Singleton

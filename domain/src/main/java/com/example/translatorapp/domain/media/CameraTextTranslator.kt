@@ -4,55 +4,25 @@ import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
 import com.example.translatorapp.domain.model.ml.RecognizedText
 import com.example.translatorapp.domain.usecase.translation.TranslateTextUseCase
-import kotlin.time.TimeSource
 
 class CameraTextTranslator(private val translateTextUseCase: TranslateTextUseCase) {
     private val blockCache = mutableMapOf<CacheKey, String>()
 
-    private var lastRecognizedText = ""
-
-    private var lastDisplayedBlocks = emptyList<DisplayedTextBlock>()
-
-    private val timeSource = TimeSource.Monotonic
-
-    private var lastTranslationMark = timeSource.markNow()
-
-    private companion object {
-        const val MIN_TRANSLATION_INTERVAL_MS = 700L
-    }
-
-    suspend fun translate(
+    fun getDisplayedBlocks(
         recognizedText: RecognizedText,
         sourceLanguage: LanguageCode,
         destinationLanguage: LanguageCode,
     ): List<DisplayedTextBlock> {
+        return recognizedText.blocks.map { block ->
+            val normalizedText = block.text.trim()
 
-        val currentText = recognizedText.blocks
-            .joinToString("\n") { it.text.trim() }
-            .trim()
-
-        if (currentText.isBlank()) {
-            return emptyList()
-        }
-
-        if (currentText == lastRecognizedText) {
-            return lastDisplayedBlocks
-        }
-
-        if (
-            lastTranslationMark.elapsedNow().inWholeMilliseconds <
-            MIN_TRANSLATION_INTERVAL_MS
-        ) {
-            return lastDisplayedBlocks
-        }
-
-        val translatedBlocks = recognizedText.blocks.map { block ->
-
-            val translatedText = translateBlock(
-                text = block.text,
+            val key = CacheKey(
                 sourceLanguage = sourceLanguage,
-                destinationLanguage = destinationLanguage
+                destinationLanguage = destinationLanguage,
+                text = normalizedText
             )
+
+            val translatedText = blockCache[key] ?: block.text
 
             DisplayedTextBlock(
                 originalText = block.text,
@@ -60,46 +30,41 @@ class CameraTextTranslator(private val translateTextUseCase: TranslateTextUseCas
                 bounds = block.bounds
             )
         }
+    }
 
-        lastRecognizedText = currentText
-        lastDisplayedBlocks = translatedBlocks
-        lastTranslationMark = timeSource.markNow()
+    suspend fun translate(
+        recognizedText: RecognizedText,
+        sourceLanguage: LanguageCode,
+        destinationLanguage: LanguageCode,
+    ) {
+        recognizedText.blocks.forEach { block ->
+            val text = block.text.trim()
 
-        return translatedBlocks
+            if (text.isBlank())
+                return@forEach
+
+            val key = CacheKey(
+                sourceLanguage = sourceLanguage,
+                destinationLanguage = destinationLanguage,
+                text = text
+            )
+
+            if (blockCache.containsKey(key))
+                return@forEach
+
+            val translatedText = translateTextUseCase(
+                sourceLanguage = sourceLanguage,
+                destinationLanguage = destinationLanguage,
+                text = text
+            ).getOrNull()?.translatedText ?: block.text
+
+            blockCache[key] = translatedText
+        }
     }
 
     fun clearCache() {
         blockCache.clear()
-        lastRecognizedText = ""
-        lastDisplayedBlocks = emptyList()
-        lastTranslationMark = timeSource.markNow()
     }
-
-    private suspend fun translateBlock(
-        text: String,
-        sourceLanguage: LanguageCode,
-        destinationLanguage: LanguageCode,
-    ): String {
-
-        val key = CacheKey(
-            sourceLanguage = sourceLanguage,
-            destinationLanguage = destinationLanguage,
-            text = text.trim()
-        )
-
-        blockCache[key]?.let { return it }
-
-        val translated = translateTextUseCase(
-            sourceLanguage = sourceLanguage,
-            destinationLanguage = destinationLanguage,
-            text = text
-        ).getOrNull()?.translatedText ?: text
-
-        blockCache[key] = translated
-
-        return translated
-    }
-
 
     private data class CacheKey(
         val sourceLanguage: LanguageCode,
