@@ -4,8 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,7 +62,7 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
             )
         }
 
-        CameraOverlay(
+       CameraOverlay(
             blocks = state.translatedBlocks,
             modifier = Modifier.fillMaxSize()
         )
@@ -71,7 +74,10 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
         ) {
             CameraTopBar(onNavBackClick = onNavBackClick)
 
+            Spacer(modifier = Modifier.height(12.dp))
+
             TransparentLanguageSelector(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
                 sourceLanguage = state.sourceLanguage,
                 destinationLanguage = state.destinationLanguage,
                 onSwapLanguages = cameraViewModel::onSwapLanguages,

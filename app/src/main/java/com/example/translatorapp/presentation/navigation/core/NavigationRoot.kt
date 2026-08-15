@@ -21,7 +21,6 @@ import com.example.translatorapp.presentation.screen.translation.main.Translatio
 
 @Composable
 fun NavigationRoot(authState: AuthState) {
-
     when (authState) {
         AuthState.Loading -> {}
 
@@ -40,15 +39,11 @@ private fun <T : NavKey> rememberNavBackStack(
     vararg elements: T,
     key: Any? = Unit,
 ): NavBackStack<T> {
-    val backStack = remember(key) {
-        NavBackStack(*elements)
-    }
+    val backStack = remember(key) { NavBackStack(*elements) }
 
     return rememberSerializable(
         serializer = NavBackStackSerializer(elementSerializer = NavKeySerializer())
-    ) {
-        backStack
-    }
+    ) { backStack }
 }
 
 @Composable
@@ -73,7 +68,6 @@ private fun AuthNavHost(startDestination: Route) {
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
-
             entry<Route.LoginRoute> { key ->
                 LoginScreen(
                     onSignInClick = {
@@ -121,37 +115,24 @@ private fun MainNavHost(startDestination: Route) {
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
-
             entry<Route.TranslationRoute> {
                 TranslationScreen(
-                    onHistoryNavClick = {
-                        navigator.navigate(Route.HistoryRoute)
-                    },
-                    onCameraNavClick = {
-                        navigator.navigate(Route.CameraRoute)
-                    },
-                    onFavouritesNavClick = {
-                        navigator.navigate(Route.FavouritesRoute)
-                    }
+                    onHistoryNavClick = { navigator.navigate(Route.HistoryRoute) },
+                    onCameraNavClick = { navigator.navigate(Route.CameraRoute) },
+                    onFavouritesNavClick = { navigator.navigate(Route.FavouritesRoute) }
                 )
             }
 
             entry<Route.HistoryRoute> {
-                HistoryScreen(
-                    onNavBackClick = { navigator.goBack() }
-                )
+                HistoryScreen(onNavBackClick = { navigator.goBack() })
             }
 
             entry<Route.FavouritesRoute> {
-                FavouritesScreen(
-                    onNavBackClick = { navigator.goBack() }
-                )
+                FavouritesScreen(onNavBackClick = { navigator.goBack() })
             }
 
             entry<Route.CameraRoute> {
-                CameraScreen(
-                    onNavBackClick = { navigator.goBack() }
-                )
+                CameraScreen(onNavBackClick = { navigator.goBack() })
             }
         }
     )

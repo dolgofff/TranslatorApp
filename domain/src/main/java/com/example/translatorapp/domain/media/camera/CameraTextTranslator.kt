@@ -1,4 +1,4 @@
-package com.example.translatorapp.domain.media
+package com.example.translatorapp.domain.media.camera
 
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
@@ -12,17 +12,20 @@ class CameraTextTranslator(private val translateTextUseCase: TranslateTextUseCas
         recognizedText: RecognizedText,
         sourceLanguage: LanguageCode,
         destinationLanguage: LanguageCode,
-    ): List<DisplayedTextBlock> {
-        return recognizedText.blocks.map { block ->
-            val normalizedText = block.text.trim()
+    ): List<DisplayedTextBlock> =
+        recognizedText.blocks.mapNotNull { block ->
+            val text = block.text.trim()
+
+            if (text.isBlank())
+                return@mapNotNull null
 
             val key = CacheKey(
                 sourceLanguage = sourceLanguage,
                 destinationLanguage = destinationLanguage,
-                text = normalizedText
+                text = text
             )
 
-            val translatedText = blockCache[key] ?: block.text
+            val translatedText = blockCache[key] ?: return@mapNotNull null
 
             DisplayedTextBlock(
                 originalText = block.text,
@@ -30,7 +33,6 @@ class CameraTextTranslator(private val translateTextUseCase: TranslateTextUseCas
                 bounds = block.bounds
             )
         }
-    }
 
     suspend fun translate(
         recognizedText: RecognizedText,

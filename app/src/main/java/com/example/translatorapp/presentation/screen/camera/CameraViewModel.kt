@@ -5,7 +5,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.translatorapp.data.media.camera.CameraController
-import com.example.translatorapp.domain.media.CameraTextTranslator
+import com.example.translatorapp.domain.media.camera.CameraTextTranslator
+import com.example.translatorapp.domain.media.camera.TextStabilizer
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
 import com.example.translatorapp.domain.model.ml.RecognizedText
@@ -16,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -25,11 +27,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-//TODO: Пользователь нажимает на capture, и тогда появляется кнопка "Go to translator" и распознанный текст переносится на экран назад в поле "sourceText"
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CameraViewModel @Inject constructor(
@@ -38,9 +40,19 @@ class CameraViewModel @Inject constructor(
     private val setDestinationLanguageUseCase: SetDestinationLanguageUseCase,
     private val cameraTextTranslator: CameraTextTranslator,
     private val observePreferencesUseCase: ObservePreferencesUseCase,
+    private val textStabilizer: TextStabilizer,
 ) : ViewModel() {
     private val _cameraState = MutableStateFlow(CameraState())
     val cameraState = _cameraState.asStateFlow()
+
+    private val stabilizedRecognizedText = cameraController.recognizedText
+        .filterNotNull()
+        .map { recognized -> textStabilizer.stabilize(recognized) }
+        .shareIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            replay = 1
+        )
 
     init {
         observeSavedLanguages()
@@ -64,9 +76,22 @@ class CameraViewModel @Inject constructor(
         cameraController.setTorch(newState)
     }
 
+    fun onCaptureClick() {
+    /*
+    1. Пользователь нажимает на capture
+    2. Появляется фотка с переведённым текстом (поверх исходного, как в CameraOverlay). Помимо этого в этом режиме сохраняется аналогичный topappbar, только вместо кнопки назад кнопка крестика, нажимая на которую пользователь попадает назад в камеру, transparentlanguageselector сохраняется, и его возможности можно аналогично применять.
+    3. Помимо этого, внизу появляется кнопка "Go to translator", при нажатии на которую распознанный текст переносится на основной экран в поле "sourceText"
+    */
+    }
+
+    fun onGalleryClick() {
+        /*
+        1. Всё работает по аналогии с onCaptureClick(), только фотка предварительно выбирается из галлереи.
+         */
+    }
+
     private fun observeTranslations() {
-        cameraController.recognizedText
-            .filterNotNull()
+        stabilizedRecognizedText
             .map { recognized ->
                 val state = _cameraState.value
 
@@ -94,24 +119,20 @@ class CameraViewModel @Inject constructor(
                     destinationLanguage = request.destinationLanguage
                 )
             }
-            .onEach {
-                refreshDisplayedBlocks()
-            }
+            .onEach { refreshDisplayedBlocks() }
             .launchIn(viewModelScope)
     }
 
     private fun observeRecognizedText() {
-        cameraController.recognizedText
-            .filterNotNull()
+        stabilizedRecognizedText
             .onEach { recognized ->
                 val state = _cameraState.value
 
-                val displayedBlocks =
-                    cameraTextTranslator.getDisplayedBlocks(
-                        recognizedText = recognized,
-                        sourceLanguage = state.sourceLanguage,
-                        destinationLanguage = state.destinationLanguage
-                    )
+                val displayedBlocks = cameraTextTranslator.getDisplayedBlocks(
+                    recognizedText = recognized,
+                    sourceLanguage = state.sourceLanguage,
+                    destinationLanguage = state.destinationLanguage
+                )
 
                 _cameraState.update {
                     it.copy(recognizedText = recognized, translatedBlocks = displayedBlocks)
@@ -195,9 +216,7 @@ class CameraViewModel @Inject constructor(
             destinationLanguage = state.destinationLanguage
         )
 
-        _cameraState.update {
-            it.copy(translatedBlocks = displayedBlocks)
-        }
+        _cameraState.update { it.copy(translatedBlocks = displayedBlocks) }
     }
 
     private data class TranslationRequest(
@@ -216,12 +235,3 @@ class CameraViewModel @Inject constructor(
         val languageList: List<LanguageCode> = LanguageCode.getLanguageList(),
     )
 }
-
-/*
-fun onCaptureClick() {
-
-}
-
-fun onGalleryClick() {
-
-}*/

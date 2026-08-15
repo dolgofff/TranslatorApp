@@ -1,6 +1,6 @@
 package com.example.translatorapp.domain.usecase.audio
 
-import com.example.translatorapp.domain.media.VoiceRecognizer
+import com.example.translatorapp.domain.media.speech.VoiceRecognizer
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
 import kotlinx.coroutines.flow.Flow

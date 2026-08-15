@@ -1,6 +1,6 @@
 package com.example.translatorapp.app.di
 
-import com.example.translatorapp.domain.media.CameraTextTranslator
+import com.example.translatorapp.domain.media.camera.CameraTextTranslator
 import com.example.translatorapp.domain.usecase.translation.TranslateTextUseCase
 import dagger.Module
 import dagger.Provides

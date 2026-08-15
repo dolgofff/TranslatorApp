@@ -14,7 +14,7 @@ import com.example.translatorapp.data.repository.AuthRepositoryImpl
 import com.example.translatorapp.data.repository.GlobalRepositoryImpl
 import com.example.translatorapp.data.repository.TranslationRepositoryImpl
 import com.example.translatorapp.data.repository.TranslatorRepositoryImpl
-import com.example.translatorapp.domain.media.VoiceRecognizer
+import com.example.translatorapp.domain.media.speech.VoiceRecognizer
 import com.example.translatorapp.domain.repository.AuthRepository
 import com.example.translatorapp.domain.repository.GlobalRepository
 import com.example.translatorapp.domain.repository.TranslationRepository

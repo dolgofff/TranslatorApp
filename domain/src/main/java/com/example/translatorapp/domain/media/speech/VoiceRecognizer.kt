@@ -1,4 +1,4 @@
-package com.example.translatorapp.domain.media
+package com.example.translatorapp.domain.media.speech
 
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
