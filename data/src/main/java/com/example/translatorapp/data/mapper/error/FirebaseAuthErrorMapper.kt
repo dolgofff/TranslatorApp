@@ -9,8 +9,11 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FirebaseAuthErrorMapper {
+@Singleton
+class FirebaseAuthErrorMapper @Inject constructor() {
     operator fun invoke(exc: Exception): AuthError {
         return when (exc) {
             is FirebaseAuthUserCollisionException -> AuthError.EmailAlreadyInUse()

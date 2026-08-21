@@ -1,16 +1,13 @@
 package com.example.translatorapp.data.di
 
-import android.content.Context
-import com.example.translatorapp.data.mapper.entity.MlTextMapper
-import com.example.translatorapp.data.media.camera.CameraController
-import com.example.translatorapp.data.media.camera.FrameAnalyzer
+import com.google.mlkit.nl.languageid.LanguageIdentification
+import com.google.mlkit.nl.languageid.LanguageIdentifier
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -26,25 +23,9 @@ object CameraModule {
 
     @Provides
     @Singleton
+    fun provideLanguageIdentifier(): LanguageIdentifier = LanguageIdentification.getClient()
+
+    @Provides
+    @Singleton
     fun provideCameraExecutor(): ExecutorService = Executors.newSingleThreadExecutor()
-
-    @Provides
-    @Singleton
-    fun provideMlTextMapper(): MlTextMapper = MlTextMapper()
-
-    @Provides
-    @Singleton
-    fun provideFrameAnalyzer(
-        textRecognizer: TextRecognizer,
-        mapper: MlTextMapper,
-        cameraExecutor: ExecutorService,
-    ): FrameAnalyzer = FrameAnalyzer(textRecognizer, mlTextMapper = mapper, cameraExecutor)
-
-    @Provides
-    @Singleton
-    fun provideCameraController(
-        @ApplicationContext context: Context,
-        frameAnalyzer: FrameAnalyzer,
-        cameraExecutor: ExecutorService,
-    ): CameraController = CameraController(context, frameAnalyzer, cameraExecutor)
 }

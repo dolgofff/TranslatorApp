@@ -3,8 +3,11 @@ package com.example.translatorapp.data.mapper.error
 import com.example.translatorapp.domain.error.TranslationError
 import retrofit2.HttpException
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ApiErrorMapper {
+@Singleton
+class ApiErrorMapper @Inject constructor() {
     operator fun invoke(exc: Exception): TranslationError {
         return when (exc) {
             is IOException -> TranslationError.NetworkError()

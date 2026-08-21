@@ -9,12 +9,15 @@ import com.google.mlkit.vision.text.TextRecognizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FrameAnalyzer(
+@Singleton
+class FrameAnalyzer @Inject constructor(
     private val textRecognizer: TextRecognizer,
     private val mlTextMapper: MlTextMapper,
-    cameraExecutor: Executor,
+    cameraExecutor: ExecutorService,
 ) {
     private val _recognizedText = MutableStateFlow<RecognizedText?>(null)
     val recognizedText: StateFlow<RecognizedText?> = _recognizedText.asStateFlow()

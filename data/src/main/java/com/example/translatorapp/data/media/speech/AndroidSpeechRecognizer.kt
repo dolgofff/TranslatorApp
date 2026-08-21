@@ -10,13 +10,17 @@ import com.example.translatorapp.data.mapper.error.VoiceRecognitionErrorMapper
 import com.example.translatorapp.domain.media.speech.VoiceRecognizer
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import java.util.Locale
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AndroidVoiceRecognizer(
-    context: Context,
+@Singleton
+class AndroidVoiceRecognizer @Inject constructor(
+    @ApplicationContext context: Context,
     private val errorMapper: VoiceRecognitionErrorMapper,
 ) : VoiceRecognizer {
     private val recognizer = SpeechRecognizer.createSpeechRecognizer(context)

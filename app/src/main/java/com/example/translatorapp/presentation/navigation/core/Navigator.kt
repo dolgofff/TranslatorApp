@@ -21,11 +21,15 @@ class Navigator(
             backStack.removeLastOrNull()
     }
 
-/*    fun logout() {
-        backStack.removeAll { it.requiresLogin }
-
-        if (backStack.isEmpty()) {
-            backStack.add(Route.LoginRoute())
+    fun popTo(route: Route) {
+        val targetIndex = backStack.indexOfLast { entry ->
+            entry == route
         }
-    }*/
+
+        if (targetIndex == -1)
+            return
+
+        while (backStack.lastIndex > targetIndex)
+            backStack.removeLastOrNull()
+    }
 }

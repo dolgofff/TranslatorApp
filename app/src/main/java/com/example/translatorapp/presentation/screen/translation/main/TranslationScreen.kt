@@ -37,6 +37,8 @@ import com.example.translatorapp.presentation.ui.components.TranslationTopBar
 fun TranslationScreen(
     accountViewModel: AccountViewModel = hiltViewModel(),
     translationViewModel: TranslationViewModel = hiltViewModel(),
+    imageRecognitionResult: String?,
+    onImageRecognitionResultConsumed: () -> Unit,
     onHistoryNavClick: () -> Unit,
     onFavouritesNavClick: () -> Unit,
     onCameraNavClick: () -> Unit,
@@ -59,6 +61,13 @@ fun TranslationScreen(
         translationState.errorMessage?.let { snackbarHostState.showSnackbar(message = it) }
 
         translationViewModel.clearErrorMessage()
+    }
+
+    LaunchedEffect(imageRecognitionResult) {
+        val text = imageRecognitionResult?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+
+        translationViewModel.onImageRecognitionTextReceived(text)
+        onImageRecognitionResultConsumed()
     }
 
     Scaffold(

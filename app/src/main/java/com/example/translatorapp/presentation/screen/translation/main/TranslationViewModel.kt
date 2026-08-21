@@ -2,8 +2,8 @@ package com.example.translatorapp.presentation.screen.translation.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.base.Translation
+import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
 import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
 import com.example.translatorapp.domain.usecase.audio.StartVoiceRecognitionUseCase
@@ -101,6 +101,21 @@ class TranslationViewModel @Inject constructor(
                         }
                     )
                 }
+        }
+    }
+
+    fun onImageRecognitionTextReceived(text: String) {
+        _translationState.update {
+            it.copy(
+                sourceText = text,
+                translatedText = "",
+                sourceTextAudio = null,
+                translatedTextAudio = null,
+                isFavourite = false,
+                translationSnapshot = null,
+                errorMessage = null,
+                uiMode = TranslationUiMode.RESULT
+            )
         }
     }
 

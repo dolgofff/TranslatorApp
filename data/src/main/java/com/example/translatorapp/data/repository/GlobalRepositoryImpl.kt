@@ -8,9 +8,13 @@ import com.example.translatorapp.domain.repository.GlobalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class GlobalRepositoryImpl(private val dataStore: DataStore<LanguagePreferences>) :
-    GlobalRepository {
+@Singleton
+class GlobalRepositoryImpl @Inject constructor(
+    private val dataStore: DataStore<LanguagePreferences>,
+) : GlobalRepository {
     override val preferencesFlow: Flow<LanguageSavedSettings> =
         dataStore.data.catch { emit(LanguagePreferences()) }.map { prefs ->
             LanguageSavedSettings(

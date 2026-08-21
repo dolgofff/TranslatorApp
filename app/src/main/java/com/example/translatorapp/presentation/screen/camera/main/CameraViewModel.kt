@@ -1,5 +1,7 @@
-package com.example.translatorapp.presentation.screen.camera
+package com.example.translatorapp.presentation.screen.camera.main
 
+import android.net.Uri
+import android.util.Log
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -16,8 +18,10 @@ import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCa
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -45,12 +49,15 @@ class CameraViewModel @Inject constructor(
     private val _cameraState = MutableStateFlow(CameraState())
     val cameraState = _cameraState.asStateFlow()
 
+    private val _events = MutableSharedFlow<CameraEvent>(extraBufferCapacity = 1)
+    val events = _events.asSharedFlow()
+
     private val stabilizedRecognizedText = cameraController.recognizedText
         .filterNotNull()
         .map { recognized -> textStabilizer.stabilize(recognized) }
         .shareIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Companion.WhileSubscribed(5_000),
             replay = 1
         )
 
@@ -77,17 +84,30 @@ class CameraViewModel @Inject constructor(
     }
 
     fun onCaptureClick() {
-    /*
-    1. Пользователь нажимает на capture
-    2. Появляется фотка с переведённым текстом (поверх исходного, как в CameraOverlay). Помимо этого в этом режиме сохраняется аналогичный topappbar, только вместо кнопки назад кнопка крестика, нажимая на которую пользователь попадает назад в камеру, transparentlanguageselector сохраняется, и его возможности можно аналогично применять.
-    3. Помимо этого, внизу появляется кнопка "Go to translator", при нажатии на которую распознанный текст переносится на основной экран в поле "sourceText"
-    */
-    }
+        if (_cameraState.value.isCapturing)
+            return
 
-    fun onGalleryClick() {
-        /*
-        1. Всё работает по аналогии с onCaptureClick(), только фотка предварительно выбирается из галлереи.
-         */
+        _cameraState.update { it.copy(isCapturing = true) }
+
+        cameraController.takePicture(
+            onSuccess = { uri ->
+                _cameraState.update { it.copy(isCapturing = false) }
+
+                _events.tryEmit(CameraEvent.ImageCaptured(uri))
+            },
+
+            onError = { throwable ->
+                Log.e("CameraViewModel", "Image capture failed", throwable)
+
+                _cameraState.update { it.copy(isCapturing = false) }
+
+                _events.tryEmit(
+                    CameraEvent.CaptureFailed(
+                        message = throwable.message ?: "Failed to capture image"
+                    )
+                )
+            }
+        )
     }
 
     private fun observeTranslations() {
@@ -219,6 +239,11 @@ class CameraViewModel @Inject constructor(
         _cameraState.update { it.copy(translatedBlocks = displayedBlocks) }
     }
 
+    sealed interface CameraEvent {
+        data class ImageCaptured(val uri: Uri) : CameraEvent
+        data class CaptureFailed(val message: String) : CameraEvent
+    }
+
     private data class TranslationRequest(
         val recognizedText: RecognizedText,
         val textKey: String,
@@ -230,8 +255,9 @@ class CameraViewModel @Inject constructor(
         val recognizedText: RecognizedText? = null,
         val translatedBlocks: List<DisplayedTextBlock> = emptyList(),
         val isTorchOn: Boolean = false,
+        val isCapturing: Boolean = false,
         val sourceLanguage: LanguageCode = LanguageCode.ENGLISH,
         val destinationLanguage: LanguageCode = LanguageCode.RUSSIAN,
-        val languageList: List<LanguageCode> = LanguageCode.getLanguageList(),
+        val languageList: List<LanguageCode> = LanguageCode.Companion.getLanguageList(),
     )
 }

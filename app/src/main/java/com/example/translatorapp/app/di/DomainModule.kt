@@ -1,7 +1,6 @@
 package com.example.translatorapp.app.di
 
-import com.example.translatorapp.data.media.speech.ExoAudioPlayer
-import com.example.translatorapp.domain.media.camera.TextStabilizer
+import com.example.translatorapp.domain.media.speech.AudioPlayer
 import com.example.translatorapp.domain.media.speech.VoiceRecognizer
 import com.example.translatorapp.domain.repository.AuthRepository
 import com.example.translatorapp.domain.repository.GlobalRepository
@@ -31,7 +30,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -109,7 +107,7 @@ object DomainModule {
 
     // Media UseCases
     @Provides
-    fun providePlayAudioUseCase(audioPlayer: ExoAudioPlayer): PlayAudioUseCase =
+    fun providePlayAudioUseCase(audioPlayer: AudioPlayer): PlayAudioUseCase =
         PlayAudioUseCase(audioPlayer)
 
     @Provides
@@ -119,8 +117,4 @@ object DomainModule {
     @Provides
     fun provideStopVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StopVoiceRecognitionUseCase =
         StopVoiceRecognitionUseCase(voiceRecognizer)
-
-    @Provides
-    @Singleton
-    fun provideTextStabilizer(): TextStabilizer = TextStabilizer()
 }

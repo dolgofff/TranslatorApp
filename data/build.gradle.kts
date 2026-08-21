@@ -56,6 +56,7 @@ dependencies {
 
     //ML kit dependencies
     implementation(libs.text.recognition)
+    implementation(libs.language.id)
 
     // Camera dependencies
     implementation(libs.camerax.core)

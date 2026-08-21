@@ -11,10 +11,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FlashOff
@@ -34,7 +37,10 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.PhotoAlbum
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextMeasurer
@@ -79,11 +86,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import coil.compose.AsyncImage
 import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.ml.DisplayedTextBlock
+import com.example.translatorapp.domain.model.ml.TextBounds
+import com.example.translatorapp.presentation.screen.camera.image.ImageTranslationViewModel
+import com.example.translatorapp.presentation.ui.theme.MainColor
 import com.example.translatorapp.presentation.ui.theme.White
 import kotlinx.coroutines.delay
 
+// Dynamic translation
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
@@ -535,10 +547,11 @@ private fun LanguageItem(language: LanguageCode, isSelected: Boolean, onClick: (
 @Composable
 fun CameraBottomBar(
     modifier: Modifier = Modifier,
-    onGalleryClick: () -> Unit,
     onCaptureClick: () -> Unit,
     onFlashClick: () -> Unit,
+    onGalleryClick: () -> Unit,
     isTorchOn: Boolean,
+    isCapturing: Boolean,
 ) {
     Row(
         modifier = modifier
@@ -551,13 +564,13 @@ fun CameraBottomBar(
         IconButton(onClick = onGalleryClick) {
             Icon(
                 imageVector = Icons.Default.PhotoAlbum,
-                contentDescription = "Navigate to album",
+                contentDescription = "Open album",
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)
             )
         }
 
-        CaptureButton(onCaptureClick = onCaptureClick)
+        CaptureButton(onCaptureClick = onCaptureClick, isCapturing = isCapturing)
 
         IconButton(onClick = onFlashClick) {
             Icon(
@@ -571,7 +584,7 @@ fun CameraBottomBar(
 }
 
 @Composable
-fun CaptureButton(onCaptureClick: () -> Unit) {
+fun CaptureButton(onCaptureClick: () -> Unit, isCapturing: Boolean) {
     Box(
         modifier = Modifier
             .size(74.dp)
@@ -582,9 +595,174 @@ fun CaptureButton(onCaptureClick: () -> Unit) {
             )
             .padding(6.dp)
             .background(
-                color = Color.Black.copy(alpha = 0.72f),
+                color = Color.Black.copy(alpha = if (isCapturing) 0.4f else 0.72f),
                 shape = CircleShape
             )
-            .clickable(onClick = onCaptureClick)
+            .clickable(enabled = !isCapturing, onClick = onCaptureClick)
     )
 }
+
+// Static translation
+@Composable
+fun ImageTranslationContent(
+    state: ImageTranslationViewModel.ImageTranslationState,
+    onNavBackClick: () -> Unit,
+    onSourceLanguageChange: (LanguageCode) -> Unit,
+    onDestinationLanguageChange: (LanguageCode) -> Unit,
+    onSwapLanguages: () -> Unit,
+    onGoToTranslatorClick: () -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        state.imageUri?.let { uri ->
+            StaticTranslatedImage(
+                imageUri = uri,
+                imageWidth = state.imageWidth,
+                imageHeight = state.imageHeight,
+                blocks = state.translatedBlocks,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+        ) {
+            CameraTopBar(onNavBackClick = onNavBackClick)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            TransparentLanguageSelector(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                sourceLanguage = state.sourceLanguage,
+                destinationLanguage = state.destinationLanguage,
+                languageList = state.languageList,
+                onSourceLanguageChange = onSourceLanguageChange,
+                onDestinationLanguageChange = onDestinationLanguageChange,
+                onSwapLanguages = onSwapLanguages
+            )
+        }
+
+        Button(
+            onClick = onGoToTranslatorClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(24.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(50)
+                ),
+            enabled = state.recognizedText?.blocks?.isNotEmpty() == true,
+            colors = ButtonDefaults.buttonColors(containerColor = MainColor)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Go back to translator",
+                tint = Color.White
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text("Go to translator")
+        }
+
+        if (state.isLoading)
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    }
+}
+
+@Composable
+private fun StaticTranslatedImage(
+    imageUri: String,
+    imageWidth: Int,
+    imageHeight: Int,
+    blocks: List<DisplayedTextBlock>,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier) {
+        val density = LocalDensity.current
+
+        val containerWidthPx = with(density) { maxWidth.toPx() }
+        val containerHeightPx = with(density) { maxHeight.toPx() }
+
+        val transform = remember(imageWidth, imageHeight, containerWidthPx, containerHeightPx) {
+            calculateFitTransform(
+                imageWidth = imageWidth,
+                imageHeight = imageHeight,
+                containerWidth = containerWidthPx,
+                containerHeight = containerHeightPx
+            )
+        }
+
+        AsyncImage(
+            model = imageUri,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        StaticImageOverlay(
+            blocks = blocks,
+            transform = transform,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+private fun StaticImageOverlay(
+    blocks: List<DisplayedTextBlock>,
+    transform: ImageFitTransform,
+    modifier: Modifier = Modifier,
+) {
+    val transformedBlocks = remember(blocks, transform) {
+        blocks.map { block ->
+            val bounds = block.bounds
+
+            if (bounds == null)
+                block
+            else
+                block.copy(
+                    bounds = TextBounds(
+                        left = (bounds.left * transform.scale + transform.offsetX).toInt(),
+                        top = (bounds.top * transform.scale + transform.offsetY).toInt(),
+                        right = (bounds.right * transform.scale + transform.offsetX).toInt(),
+                        bottom = (bounds.bottom * transform.scale + transform.offsetY).toInt()
+                    )
+                )
+        }
+    }
+
+    CameraOverlay(blocks = transformedBlocks, modifier = modifier)
+}
+
+private fun calculateFitTransform(
+    imageWidth: Int,
+    imageHeight: Int,
+    containerWidth: Float,
+    containerHeight: Float,
+): ImageFitTransform {
+    if (imageWidth <= 0 || imageHeight <= 0 || containerWidth <= 0 || containerHeight <= 0)
+        return ImageFitTransform(scale = 1f, offsetX = 0f, offsetY = 0f)
+
+    val scaleX = containerWidth / imageWidth.toFloat()
+    val scaleY = containerHeight / imageHeight.toFloat()
+
+    val scale = minOf(scaleX, scaleY)
+
+    val displayedWidth = imageWidth * scale
+    val displayedHeight = imageHeight * scale
+
+    val offsetX = (containerWidth - displayedWidth) / 2f
+    val offsetY = (containerHeight - displayedHeight) / 2f
+
+    return ImageFitTransform(scale = scale, offsetX = offsetX, offsetY = offsetY)
+}
+
+private data class ImageFitTransform(
+    val scale: Float,
+    val offsetX: Float,
+    val offsetY: Float,
+)
+

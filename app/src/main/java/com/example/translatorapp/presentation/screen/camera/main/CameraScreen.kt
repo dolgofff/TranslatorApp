@@ -1,7 +1,12 @@
-package com.example.translatorapp.presentation.screen.camera
+package com.example.translatorapp.presentation.screen.camera.main
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.translatorapp.presentation.common.rememberPermissionHandler
+import com.example.translatorapp.presentation.screen.camera.main.CameraViewModel.CameraEvent
 import com.example.translatorapp.presentation.ui.components.CameraBottomBar
 import com.example.translatorapp.presentation.ui.components.CameraOverlay
 import com.example.translatorapp.presentation.ui.components.CameraPreview
@@ -29,8 +35,12 @@ import com.example.translatorapp.presentation.ui.components.CameraTopBar
 import com.example.translatorapp.presentation.ui.components.TransparentLanguageSelector
 
 @Composable
-fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackClick: () -> Unit) {
-    val state by cameraViewModel.cameraState.collectAsStateWithLifecycle()
+fun CameraScreen(
+    viewModel: CameraViewModel = hiltViewModel(),
+    onNavBackClick: () -> Unit,
+    onImageSelected: (Uri) -> Unit,
+) {
+    val state by viewModel.cameraState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     var hasCameraPermission by remember {
@@ -47,9 +57,30 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
         onPermissionGranted = { hasCameraPermission = true }
     )
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null)
+            onImageSelected(uri)
+    }
+
     LaunchedEffect(Unit) {
         if (!hasCameraPermission)
             requestCameraPermission()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is CameraEvent.ImageCaptured -> {
+                    onImageSelected(event.uri)
+                }
+
+                is CameraEvent.CaptureFailed -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -57,12 +88,12 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
             CameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 context = context,
-                onStartCamera = cameraViewModel::startCamera,
-                onStopCamera = cameraViewModel::stopCamera
+                onStartCamera = viewModel::startCamera,
+                onStopCamera = viewModel::stopCamera
             )
         }
 
-       CameraOverlay(
+        CameraOverlay(
             blocks = state.translatedBlocks,
             modifier = Modifier.fillMaxSize()
         )
@@ -80,19 +111,26 @@ fun CameraScreen(cameraViewModel: CameraViewModel = hiltViewModel(), onNavBackCl
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 sourceLanguage = state.sourceLanguage,
                 destinationLanguage = state.destinationLanguage,
-                onSwapLanguages = cameraViewModel::onSwapLanguages,
+                onSwapLanguages = viewModel::onSwapLanguages,
                 languageList = state.languageList,
-                onSourceLanguageChange = cameraViewModel::updateSourceLanguage,
-                onDestinationLanguageChange = cameraViewModel::updateDestinationLanguage
+                onSourceLanguageChange = viewModel::updateSourceLanguage,
+                onDestinationLanguageChange = viewModel::updateDestinationLanguage
             )
         }
 
         CameraBottomBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            onGalleryClick = {},
-            onCaptureClick = {},
-            onFlashClick = cameraViewModel::onFlashClick,
-            isTorchOn = state.isTorchOn
+            onCaptureClick = viewModel::onCaptureClick,
+            onFlashClick = viewModel::onFlashClick,
+            onGalleryClick = {
+                galleryLauncher.launch(
+                    PickVisualMediaRequest(
+                        mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+            },
+            isTorchOn = state.isTorchOn,
+            isCapturing = state.isCapturing,
         )
     }
 }

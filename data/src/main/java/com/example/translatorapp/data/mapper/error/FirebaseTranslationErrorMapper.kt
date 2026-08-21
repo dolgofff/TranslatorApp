@@ -2,8 +2,11 @@ package com.example.translatorapp.data.mapper.error
 
 import com.example.translatorapp.domain.error.TranslationError
 import com.google.firebase.firestore.FirebaseFirestoreException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FirebaseTranslationErrorMapper {
+@Singleton
+class FirebaseTranslationErrorMapper @Inject constructor() {
     operator fun invoke(exc: Exception): TranslationError {
         return when (exc) {
             is FirebaseFirestoreException -> when (exc.code) {
