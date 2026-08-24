@@ -1,4 +1,4 @@
-package com.example.translatorapp.domain.model
+package com.example.translatorapp.domain.model.language
 
 enum class LanguageCode(val code: String, val title: String) {
     AFRIKAANS("af", "Afrikaans"),

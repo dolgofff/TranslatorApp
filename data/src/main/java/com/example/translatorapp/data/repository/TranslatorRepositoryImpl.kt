@@ -5,14 +5,17 @@ import com.example.translatorapp.data.mapper.entity.toDomainTranslation
 import com.example.translatorapp.data.mapper.error.ApiErrorMapper
 import com.example.translatorapp.data.network.api.TranslationApi
 import com.example.translatorapp.domain.error.TranslationError
-import com.example.translatorapp.domain.model.LanguageCode
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.language.LanguageCode
+import com.example.translatorapp.domain.model.base.Translation
 import com.example.translatorapp.domain.repository.TranslatorRepository
 import kotlinx.coroutines.delay
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
 
-class TranslatorRepositoryImpl(
+@Singleton
+class TranslatorRepositoryImpl @Inject constructor(
     private val api: TranslationApi,
     private val errorMapper: ApiErrorMapper,
 ) : TranslatorRepository {

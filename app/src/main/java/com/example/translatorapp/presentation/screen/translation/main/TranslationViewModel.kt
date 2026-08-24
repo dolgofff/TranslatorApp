@@ -2,33 +2,38 @@ package com.example.translatorapp.presentation.screen.translation.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.translatorapp.domain.model.LanguageCode
-import com.example.translatorapp.domain.model.Translation
+import com.example.translatorapp.domain.model.base.Translation
+import com.example.translatorapp.domain.model.language.LanguageCode
+import com.example.translatorapp.domain.model.recognition.VoiceRecognitionEvent
 import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
+import com.example.translatorapp.domain.usecase.audio.StartVoiceRecognitionUseCase
+import com.example.translatorapp.domain.usecase.audio.StopVoiceRecognitionUseCase
 import com.example.translatorapp.domain.usecase.dataStore.ObservePreferencesUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguageUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SwapLanguagesUseCase
 import com.example.translatorapp.domain.usecase.translation.SaveTranslationUseCase
 import com.example.translatorapp.domain.usecase.translation.ToggleFavouriteUseCase
 import com.example.translatorapp.domain.usecase.translation.TranslateTextUseCase
-import com.example.translatorapp.presentation.mapper.toUiMessage
+import com.example.translatorapp.presentation.common.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
-@FlowPreview
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class TranslationViewModel @Inject constructor(
     private val translateTextUseCase: TranslateTextUseCase,
@@ -37,7 +42,10 @@ class TranslationViewModel @Inject constructor(
     private val playAudioUseCase: PlayAudioUseCase,
     private val setSourceLanguageUseCase: SetSourceLanguageUseCase,
     private val setDestinationLanguageUseCase: SetDestinationLanguageUseCase,
-    observePreferencesUseCase: ObservePreferencesUseCase,
+    private val swapLanguagesUseCase: SwapLanguagesUseCase,
+    private val startVoiceRecognitionUseCase: StartVoiceRecognitionUseCase,
+    private val stopVoiceRecognitionUseCase: StopVoiceRecognitionUseCase,
+    private val observePreferencesUseCase: ObservePreferencesUseCase,
 ) : ViewModel() {
     private val _translationState = MutableStateFlow(TranslationState())
     val translationState = _translationState.asStateFlow()
@@ -47,53 +55,73 @@ class TranslationViewModel @Inject constructor(
         .debounce(500)
         .distinctUntilChanged()
 
+    private var voiceRecognitionJob: Job? = null
+
     init {
-        viewModelScope.launch {
-            val settings = observePreferencesUseCase().first()
-            val savedSourceLanguage = settings.savedSourceLanguage
-            val savedDestinationLanguage = settings.savedDestinationLanguage
+        observeSavedLanguages()
+        observeTranslation()
+    }
 
-            _translationState.update { cur ->
-                if (cur.sourceLanguage == savedSourceLanguage && cur.destinationLanguage == savedDestinationLanguage) {
-                    return@update cur
+    private fun observeSavedLanguages() {
+        observePreferencesUseCase()
+            .onEach { settings ->
+                _translationState.update { current ->
+                    if (current.sourceLanguage == settings.savedSourceLanguage && current.destinationLanguage == settings.savedDestinationLanguage)
+                        current
+                    else
+                        current.copy(
+                            sourceLanguage = settings.savedSourceLanguage,
+                            destinationLanguage = settings.savedDestinationLanguage,
+                        )
                 }
+            }
+            .launchIn(viewModelScope)
+    }
 
-                cur.copy(
-                    sourceLanguage = savedSourceLanguage,
-                    destinationLanguage = savedDestinationLanguage
+    private fun observeTranslation() {
+        debouncedParams
+            .filter { it.first.isNotBlank() }
+            .mapLatest { (text, sourceLanguage, destinationLanguage) ->
+                translateTextUseCase(
+                    text = text,
+                    sourceLanguage = sourceLanguage,
+                    destinationLanguage = destinationLanguage,
                 )
             }
-        }
-
-        viewModelScope.launch {
-            debouncedParams
-                .filter { it.first.isNotBlank() }
-                .mapLatest { (text, sourceLanguage, destinationLanguage) ->
-                    translateTextUseCase(
-                        text = text,
-                        sourceLanguage = sourceLanguage,
-                        destinationLanguage = destinationLanguage,
-                    )
-                }
-                .collect { result ->
-                    result.fold(
-                        onSuccess = { translation ->
-                            _translationState.update {
-                                it.copy(
-                                    translatedText = translation.translatedText,
-                                    sourceTextAudio = translation.sourceAudioUrl,
-                                    translatedTextAudio = translation.destinationAudioUrl,
-                                    isFavourite = translation.isFavourite,
-                                    errorMessage = null,
-                                    translationSnapshot = translation
-                                )
-                            }
-                        },
-                        onFailure = { error ->
-                            _translationState.update { it.copy(errorMessage = error.toUiMessage()) }
+            .onEach { result ->
+                result.fold(
+                    onSuccess = { translation ->
+                        _translationState.update {
+                            it.copy(
+                                translatedText = translation.translatedText,
+                                sourceTextAudio = translation.sourceAudioUrl,
+                                translatedTextAudio = translation.destinationAudioUrl,
+                                isFavourite = translation.isFavourite,
+                                errorMessage = null,
+                                translationSnapshot = translation,
+                            )
                         }
-                    )
-                }
+                    },
+                    onFailure = { error ->
+                        _translationState.update { it.copy(errorMessage = error.toUiMessage()) }
+                    }
+                )
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun onImageRecognitionTextReceived(text: String) {
+        _translationState.update {
+            it.copy(
+                sourceText = text,
+                translatedText = "",
+                sourceTextAudio = null,
+                translatedTextAudio = null,
+                isFavourite = false,
+                translationSnapshot = null,
+                errorMessage = null,
+                uiMode = TranslationUiMode.RESULT
+            )
         }
     }
 
@@ -102,14 +130,18 @@ class TranslationViewModel @Inject constructor(
     }
 
     fun updateSourceLanguage(language: LanguageCode) {
-        _translationState.update { it.copy(sourceLanguage = language) }
+        if (_translationState.value.sourceLanguage == language)
+            return
 
+        _translationState.update { it.copy(sourceLanguage = language) }
         viewModelScope.launch { setSourceLanguageUseCase(language.code) }
     }
 
     fun updateDestinationLanguage(language: LanguageCode) {
-        _translationState.update { it.copy(destinationLanguage = language) }
+        if (_translationState.value.destinationLanguage == language)
+            return
 
+        _translationState.update { it.copy(destinationLanguage = language) }
         viewModelScope.launch { setDestinationLanguageUseCase(language.code) }
     }
 
@@ -117,35 +149,29 @@ class TranslationViewModel @Inject constructor(
         val newSourceLanguage = _translationState.value.destinationLanguage
         val newDestinationLanguage = _translationState.value.sourceLanguage
 
-        _translationState.update { cur ->
-            cur.copy(
+        _translationState.update {
+            it.copy(
                 sourceLanguage = newSourceLanguage,
-                destinationLanguage = newDestinationLanguage
+                destinationLanguage = newDestinationLanguage,
             )
         }
 
         viewModelScope.launch {
-            setSourceLanguageUseCase(newSourceLanguage.code)
-            setDestinationLanguageUseCase(newDestinationLanguage.code)
+            swapLanguagesUseCase(
+                sourceCode = newSourceLanguage.code,
+                destinationCode = newDestinationLanguage.code,
+            )
         }
     }
 
     fun onFocusChanged(focused: Boolean) {
         _translationState.update {
-            it.copy(
-                uiMode = if (focused) {
-                    TranslationUiMode.EDITING
-                } else {
-                    it.uiMode
-                }
-            )
+            it.copy(uiMode = if (focused) TranslationUiMode.EDITING else it.uiMode)
         }
     }
 
     fun onDone() {
-        _translationState.update {
-            it.copy(uiMode = TranslationUiMode.RESULT)
-        }
+        _translationState.update { it.copy(uiMode = TranslationUiMode.RESULT) }
 
         saveTranslation()
     }
@@ -164,10 +190,15 @@ class TranslationViewModel @Inject constructor(
         }
     }
 
+    fun exitEditing() {
+        _translationState.update { it.copy(uiMode = TranslationUiMode.IDLE) }
+    }
+
     fun playSourceAudio() {
         val sourceTextAudio = _translationState.value.sourceTextAudio
 
-        if (sourceTextAudio.isNullOrBlank()) return
+        if (sourceTextAudio.isNullOrBlank())
+            return
 
         viewModelScope.launch {
             playAudioUseCase(sourceTextAudio)
@@ -177,7 +208,8 @@ class TranslationViewModel @Inject constructor(
     fun playTranslatedAudio() {
         val translatedTextAudio = _translationState.value.translatedTextAudio
 
-        if (translatedTextAudio.isNullOrBlank()) return
+        if (translatedTextAudio.isNullOrBlank())
+            return
 
         viewModelScope.launch {
             playAudioUseCase(translatedTextAudio)
@@ -189,15 +221,10 @@ class TranslationViewModel @Inject constructor(
         val updatedValue = !translation.isFavourite
 
         viewModelScope.launch {
-            val result =
-                toggleFavouriteUseCase(id = translation.id, isFavourite = updatedValue)
+            val result = toggleFavouriteUseCase(id = translation.id, isFavourite = updatedValue)
 
             result.fold(
-                onSuccess = {
-                    _translationState.update {
-                        it.copy(isFavourite = updatedValue)
-                    }
-                },
+                onSuccess = { _translationState.update { it.copy(isFavourite = updatedValue) } },
                 onFailure = { error ->
                     _translationState.update { it.copy(errorMessage = error.toUiMessage()) }
                 }
@@ -208,7 +235,8 @@ class TranslationViewModel @Inject constructor(
     fun saveTranslation() {
         val currentState = _translationState.value
 
-        if (currentState.sourceText.isBlank() || currentState.translatedText.isBlank()) return
+        if (currentState.sourceText.isBlank() || currentState.translatedText.isBlank())
+            return
 
         currentState.translationSnapshot?.let { translation ->
             viewModelScope.launch {
@@ -225,6 +253,49 @@ class TranslationViewModel @Inject constructor(
         _translationState.update { it.copy(errorMessage = null) }
     }
 
+    fun startVoiceRecognition() {
+        if (_translationState.value.isRecording)
+            return
+
+        _translationState.update { it.copy(isRecording = true) }
+        voiceRecognitionJob?.cancel()
+
+        voiceRecognitionJob = viewModelScope.launch {
+            startVoiceRecognitionUseCase(languageCode = _translationState.value.sourceLanguage)
+                .collect { result ->
+                    when (result) {
+                        is VoiceRecognitionEvent.Listening -> Unit
+
+                        is VoiceRecognitionEvent.PartialResult -> {
+                            updateSourceText(result.text)
+                        }
+
+                        is VoiceRecognitionEvent.FinalResult -> {
+                            updateSourceText(result.text)
+                            stopVoiceRecognition()
+                        }
+
+                        is VoiceRecognitionEvent.Error -> {
+                            _translationState.update { it.copy(errorMessage = result.error.toUiMessage()) }
+                            stopVoiceRecognition()
+                        }
+                    }
+                }
+        }
+    }
+
+    fun stopVoiceRecognition() {
+        if (!_translationState.value.isRecording)
+            return
+
+        stopVoiceRecognitionUseCase()
+
+        voiceRecognitionJob?.cancel()
+        voiceRecognitionJob = null
+
+        _translationState.update { it.copy(isRecording = false) }
+    }
+
     data class TranslationState(
         val sourceText: String = "",
         val translatedText: String = "",
@@ -233,6 +304,7 @@ class TranslationViewModel @Inject constructor(
         val sourceTextAudio: String? = null,
         val translatedTextAudio: String? = null,
         val isFavourite: Boolean = false,
+        val isRecording: Boolean = false,
         val languageList: List<LanguageCode> = LanguageCode.getLanguageList(),
         val errorMessage: String? = null,
         val translationSnapshot: Translation? = null,

@@ -1,11 +1,14 @@
-package com.example.translatorapp.presentation.di
+package com.example.translatorapp.app.di
 
-import com.example.translatorapp.data.media.ExoAudioPlayer
+import com.example.translatorapp.domain.media.speech.AudioPlayer
+import com.example.translatorapp.domain.media.speech.VoiceRecognizer
 import com.example.translatorapp.domain.repository.AuthRepository
 import com.example.translatorapp.domain.repository.GlobalRepository
 import com.example.translatorapp.domain.repository.TranslationRepository
 import com.example.translatorapp.domain.repository.TranslatorRepository
 import com.example.translatorapp.domain.usecase.audio.PlayAudioUseCase
+import com.example.translatorapp.domain.usecase.audio.StartVoiceRecognitionUseCase
+import com.example.translatorapp.domain.usecase.audio.StopVoiceRecognitionUseCase
 import com.example.translatorapp.domain.usecase.authorization.AuthStateUseCase
 import com.example.translatorapp.domain.usecase.authorization.GetCurrentUserUseCase
 import com.example.translatorapp.domain.usecase.authorization.LogOutUseCase
@@ -16,6 +19,7 @@ import com.example.translatorapp.domain.usecase.authorization.SignInGoogleUseCas
 import com.example.translatorapp.domain.usecase.dataStore.ObservePreferencesUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguageUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SwapLanguagesUseCase
 import com.example.translatorapp.domain.usecase.translation.ClearHistoryUseCase
 import com.example.translatorapp.domain.usecase.translation.DeleteTranslationUseCase
 import com.example.translatorapp.domain.usecase.translation.ObserveFavouritesUseCase
@@ -30,7 +34,7 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-class DomainModule {
+object DomainModule {
     // Authorization UseCases
     @Provides
     fun provideRegistrationUseCase(authRepository: AuthRepository): RegistrationUseCase =
@@ -102,9 +106,20 @@ class DomainModule {
     fun provideObservePreferencesUseCase(globalRepository: GlobalRepository): ObservePreferencesUseCase =
         ObservePreferencesUseCase(globalRepository)
 
+    @Provides
+    fun provideSwapLanguagesUseCase(globalRepository: GlobalRepository): SwapLanguagesUseCase =
+        SwapLanguagesUseCase(globalRepository)
+
     // Media UseCases
     @Provides
-    fun providePlayAudioUseCase(audioPlayer: ExoAudioPlayer): PlayAudioUseCase =
+    fun providePlayAudioUseCase(audioPlayer: AudioPlayer): PlayAudioUseCase =
         PlayAudioUseCase(audioPlayer)
 
+    @Provides
+    fun provideStartVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StartVoiceRecognitionUseCase =
+        StartVoiceRecognitionUseCase(voiceRecognizer)
+
+    @Provides
+    fun provideStopVoiceRecognitionUseCase(voiceRecognizer: VoiceRecognizer): StopVoiceRecognitionUseCase =
+        StopVoiceRecognitionUseCase(voiceRecognizer)
 }

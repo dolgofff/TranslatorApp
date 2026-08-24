@@ -26,9 +26,7 @@ class MainActivity : ComponentActivity() {
             val viewModel: AuthViewModel = hiltViewModel()
             val authState by viewModel.authState.collectAsStateWithLifecycle()
 
-            splashScreen.setKeepOnScreenCondition {
-                authState is AuthState.Loading
-            }
+            splashScreen.setKeepOnScreenCondition { authState is AuthState.Loading }
 
             MaterialTheme {
                 NavigationRoot(authState = authState)

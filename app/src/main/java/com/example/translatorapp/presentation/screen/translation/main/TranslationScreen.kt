@@ -1,12 +1,14 @@
 package com.example.translatorapp.presentation.screen.translation.main
 
+import android.Manifest
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,35 +26,72 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.translatorapp.presentation.common.rememberPermissionHandler
 import com.example.translatorapp.presentation.screen.translation.account.AccountBottomSheet
 import com.example.translatorapp.presentation.screen.translation.account.AccountViewModel
 import com.example.translatorapp.presentation.ui.components.BottomActionsBar
 import com.example.translatorapp.presentation.ui.components.LanguageSelector
 import com.example.translatorapp.presentation.ui.components.TranslationCard
 import com.example.translatorapp.presentation.ui.components.TranslationTopBar
-import kotlinx.coroutines.FlowPreview
 
-@OptIn(FlowPreview::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TranslationScreen(
     accountViewModel: AccountViewModel = hiltViewModel(),
     translationViewModel: TranslationViewModel = hiltViewModel(),
+    imageRecognitionResult: String?,
+    onImageRecognitionResultConsumed: () -> Unit,
     onHistoryNavClick: () -> Unit,
     onFavouritesNavClick: () -> Unit,
+    onCameraNavClick: () -> Unit,
 ) {
     val userState by accountViewModel.userState.collectAsStateWithLifecycle()
     val translationState by translationViewModel.translationState.collectAsStateWithLifecycle()
 
     var isSheetVisible by rememberSaveable { mutableStateOf(false) }
-    val uiMode = translationState.uiMode
 
+    val isImeVisible = WindowInsets.isImeVisible
+    var wasImeVisible by remember { mutableStateOf(false) }
+
+    val uiMode = translationState.uiMode
     val focusManager = LocalFocusManager.current
+
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiMode, isImeVisible) {
+        if (uiMode != TranslationUiMode.EDITING) {
+            wasImeVisible = false
+            return@LaunchedEffect
+        }
+
+        if (isImeVisible) {
+            wasImeVisible = true
+        } else if (wasImeVisible) {
+            wasImeVisible = false
+
+            focusManager.clearFocus()
+            translationViewModel.reset()
+
+            translationViewModel.exitEditing()
+        }
+    }
+
+    val requestRecordAudioPermission = rememberPermissionHandler(
+        permission = Manifest.permission.RECORD_AUDIO,
+        onPermissionGranted = translationViewModel::startVoiceRecognition
+    )
 
     LaunchedEffect(translationState.errorMessage) {
         translationState.errorMessage?.let { snackbarHostState.showSnackbar(message = it) }
 
         translationViewModel.clearErrorMessage()
+    }
+
+    LaunchedEffect(imageRecognitionResult) {
+        val text = imageRecognitionResult?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+
+        translationViewModel.onImageRecognitionTextReceived(text)
+        onImageRecognitionResultConsumed()
     }
 
     Scaffold(
@@ -62,10 +101,7 @@ fun TranslationScreen(
                 onFavouritesClick = onFavouritesNavClick,
                 isSimple = uiMode != TranslationUiMode.IDLE,
                 onResetUiMode = {
-                    if (uiMode == TranslationUiMode.EDITING) {
-                        focusManager.clearFocus()
-                    }
-
+                    focusManager.clearFocus()
                     translationViewModel.reset()
                 },
                 onAccountClick = { isSheetVisible = true }
@@ -73,10 +109,20 @@ fun TranslationScreen(
         },
         bottomBar = {
             if (uiMode == TranslationUiMode.IDLE) {
-                BottomActionsBar(onHistoryClick = onHistoryNavClick)
+                BottomActionsBar(
+                    onHistoryNavClick = onHistoryNavClick,
+                    onCameraNavClick = onCameraNavClick,
+                    isRecording = translationState.isRecording,
+                    onAudioButtonClick = {
+                        if (translationState.isRecording)
+                            translationViewModel.stopVoiceRecognition()
+                        else
+                            requestRecordAudioPermission()
+
+                    }
+                )
             }
         },
-        contentWindowInsets = WindowInsets.ime,
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
@@ -86,9 +132,10 @@ fun TranslationScreen(
                 .fillMaxSize()
                 .imePadding()
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             TranslationCard(
+                modifier = Modifier.weight(1f),
                 sourceText = translationState.sourceText,
                 translatedText = translationState.translatedText,
                 hasInput = translationState.hasInput,
@@ -105,7 +152,7 @@ fun TranslationScreen(
                 }
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LanguageSelector(
                 sourceLanguage = translationState.sourceLanguage,
@@ -124,7 +171,7 @@ fun TranslationScreen(
             name = userState.name,
             email = userState.email,
             onDismissRequest = { isSheetVisible = false },
-            onSettingsClick = { isSheetVisible = false }, //TODO: Implement SettingScreen
+            onSettingsClick = { isSheetVisible = false },
             onLogoutClick = {
                 isSheetVisible = false
                 accountViewModel.logout()

@@ -81,7 +81,11 @@ fun LoginForm(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        EmailField(email = email, onEmailChange = onEmailChange, errorText = errorText)
+        EmailField(
+            email = email,
+            onEmailChange = onEmailChange,
+            errorText = errorText
+        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -199,7 +203,9 @@ private fun ConfirmPasswordField(
         label = { Text("Confirm password") },
         singleLine = true,
         shape = RoundedCornerShape(14.dp),
-        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        visualTransformation =
+            if (confirmPasswordVisible) VisualTransformation.None
+            else PasswordVisualTransformation(),
         leadingIcon = {
             Icon(
                 painter = painterResource(id = R.drawable.ic_lock),
@@ -210,9 +216,7 @@ private fun ConfirmPasswordField(
             IconButton(onClick = { onConfirmPasswordVisibilityChange() }) {
                 Icon(
                     painter = painterResource(
-                        id = if (confirmPasswordVisible)
-                            R.drawable.ic_eye_visible
-                        else R.drawable.ic_eye_invisible
+                        id = if (confirmPasswordVisible) R.drawable.ic_eye_visible else R.drawable.ic_eye_invisible
                     ),
                     contentDescription = "Toggle password visibility"
                 )
@@ -375,14 +379,17 @@ fun RegistrationForm(
     onRegisterClick: () -> Unit,
     onLoginClick: () -> Unit,
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        EmailField(email = email, onEmailChange = onEmailChange, errorText = errorText)
+        EmailField(
+            email = email,
+            onEmailChange = onEmailChange,
+            errorText = errorText
+        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -406,9 +413,7 @@ fun RegistrationForm(
 
         Spacer(Modifier.height(24.dp))
 
-        RegisterButton(
-            onRegisterClick = onRegisterClick
-        )
+        RegisterButton(onRegisterClick = onRegisterClick)
 
         Spacer(Modifier.height(32.dp))
 

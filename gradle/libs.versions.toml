@@ -1,16 +1,18 @@
 [versions]
 agp = "8.13.2"
+concurrentFuturesKtx = "1.3.0"
 datastore = "1.2.1"
 kotlinxCoroutinesPlayServices = "1.11.0-rc02"
+languageId = "17.0.6"
 protoBuf = "4.34.1"
 protobuf-plugin = "0.9.6"
 firebaseBom = "34.10.0"
 firebaseAuthKtx = "23.2.1"
 firebaseFirestoreKtx = "25.1.4"
 exoPlayer = "1.10.0"
-kotlin = "2.3.20"
+kotlin = "2.2.21"
 coreKtx = "1.17.0"
-jetbrainsKotlinJvm = "2.3.20"
+jetbrainsKotlinJvm = "2.2.21"
 coroutines = "1.10.2"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -26,7 +28,7 @@ hilt = "2.57.2"
 ksp = "2.3.1"
 androidxHiltNavigationCompose = "1.3.0"
 nav3Core = "1.0.0"
-kotlinSerialization = "2.3.20"
+kotlinSerialization = "2.2.21"
 kotlinxSerializationJson = "1.10.0"
 okhttp = "5.3.2"
 retrofit = "3.0.0"
@@ -34,8 +36,18 @@ credentials = "1.5.0"
 credentialsPlayServicesAuth = "1.5.0"
 googleid = "1.2.0"
 androidxAnnotationExperimental = "1.5.1"
+camerax = "1.6.1"
+textRecognition = "19.0.1"
 
 [libraries]
+### Camera
+androidx-camera-mlkit-vision = { module = "androidx.camera:camera-mlkit-vision", version.ref = "camerax" }
+androidx-concurrent-futures-ktx = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFuturesKtx" }
+camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+camerax-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+
 ## Proto DataStore
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 google-protobuf = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protoBuf" }
@@ -77,6 +89,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 
 ## Network
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+language-id = { module = "com.google.mlkit:language-id", version.ref = "languageId" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-ser = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
@@ -101,6 +114,9 @@ androidx-exoplayer = {module = "androidx.media3:media3-exoplayer", version.ref =
 
 ## Fix for serialization bug
 androidx-annotation-experimental = { group = "androidx.annotation", name = "annotation-experimental", version.ref = "androidxAnnotationExperimental" }
+
+## ML Kit
+text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "textRecognition" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

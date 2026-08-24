@@ -19,4 +19,10 @@ sealed class Route(val requiresLogin: Boolean = false) : NavKey {
 
     @Serializable
     data object FavouritesRoute : Route(requiresLogin = true)
+
+    @Serializable
+    data object CameraRoute : Route(requiresLogin = true)
+
+    @Serializable
+    data class ImageTranslationRoute(val imageUri: String) : Route(requiresLogin = true)
 }

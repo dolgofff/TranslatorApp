@@ -6,7 +6,7 @@ import com.example.translatorapp.domain.error.AuthError
 import com.example.translatorapp.domain.usecase.authorization.ResetPasswordUseCase
 import com.example.translatorapp.domain.usecase.authorization.SignInEmailUseCase
 import com.example.translatorapp.domain.usecase.authorization.SignInGoogleUseCase
-import com.example.translatorapp.presentation.mapper.toUiMessage
+import com.example.translatorapp.presentation.common.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

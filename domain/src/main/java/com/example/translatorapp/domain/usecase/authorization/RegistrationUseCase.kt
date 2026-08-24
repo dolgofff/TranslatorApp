@@ -1,7 +1,7 @@
 package com.example.translatorapp.domain.usecase.authorization
 
 import com.example.translatorapp.domain.error.AuthError
-import com.example.translatorapp.domain.model.User
+import com.example.translatorapp.domain.model.base.User
 import com.example.translatorapp.domain.repository.AuthRepository
 
 class RegistrationUseCase(private val authRepository: AuthRepository) {

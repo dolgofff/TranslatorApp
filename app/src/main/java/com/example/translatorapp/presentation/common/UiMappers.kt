@@ -1,7 +1,8 @@
-package com.example.translatorapp.presentation.mapper
+package com.example.translatorapp.presentation.common
 
 import com.example.translatorapp.domain.error.AuthError
 import com.example.translatorapp.domain.error.TranslationError
+import com.example.translatorapp.domain.error.VoiceRecognitionError
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.time.ExperimentalTime
@@ -34,23 +35,27 @@ fun Throwable.toUiMessage(): String =
 
         is AuthError.Unknown -> errorMessage ?: "Cannot proceed an authorization right now"
 
-        is TranslationError.NetworkError ->
-            "Looks like the internet took a break!"
+        is TranslationError.NetworkError -> "Looks like the internet took a break!"
 
-        is TranslationError.NotAuthenticated ->
-            "This feature requires a login!"
+        is TranslationError.NotAuthenticated -> "This feature requires a login!"
 
-        is TranslationError.PermissionDenied ->
-            "We couldn't find this translation!"
+        is TranslationError.PermissionDenied -> "We couldn't find this translation!"
 
-        is TranslationError.InvalidData ->
-            "Looks like there is a problem with data!"
+        is TranslationError.InvalidData -> "Looks like there is a problem with data!"
 
-        is TranslationError.ServerError ->
-            "There was some problem on the server, try again!"
+        is TranslationError.ServerError -> "There was some problem on the server, try again!"
 
-        is TranslationError.Unknown ->
-            "Oops! Something went wrong!"
+        is TranslationError.Unknown -> "Oops! Something went wrong!"
+
+        is VoiceRecognitionError.ClientError -> "Something went wrong. Please try again."
+
+        is VoiceRecognitionError.PermissionDenied -> "Microphone permission is required."
+
+        is VoiceRecognitionError.NetworkError -> "Check your internet connection and try again."
+
+        is VoiceRecognitionError.NoMatch -> "Couldn't recognize your speech. Please try again."
+
+        is VoiceRecognitionError.Unknown -> "An unexpected error occurred."
 
         else -> "Oops, that wasn't supposed to happen..."
     }

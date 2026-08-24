@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class NetworkModule {
+object NetworkModule {
     @Provides
     @Singleton
     fun provideJson(): Json {
@@ -48,7 +48,7 @@ class NetworkModule {
     @Singleton
     fun provideRetrofit(json: Json, okHttp: Lazy<Call.Factory>): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://ftapi.pythonanywhere.com/")
+            .baseUrl("https://free-translate-api-y9ba.onrender.com/")
             .callFactory { okHttp.get().newCall(it) }
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

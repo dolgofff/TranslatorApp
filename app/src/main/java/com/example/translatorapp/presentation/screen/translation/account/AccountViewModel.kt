@@ -31,7 +31,7 @@ class AccountViewModel @Inject constructor(
                 _userState.update {
                     it.copy(
                         photoUrl = result.photoUrl ?: "",
-                        name = result.displayName ?: "",
+                        name = result.displayName ?: "Unknown user",
                         email = result.email ?: ""
                     )
                 }

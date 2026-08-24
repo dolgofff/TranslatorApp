@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.translatorapp.domain.usecase.translation.ObserveFavouritesUseCase
 import com.example.translatorapp.domain.usecase.translation.ToggleFavouriteUseCase
-import com.example.translatorapp.presentation.mapper.toUiMessage
+import com.example.translatorapp.presentation.common.toUiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

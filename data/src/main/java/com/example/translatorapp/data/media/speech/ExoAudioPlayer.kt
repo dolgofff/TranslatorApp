@@ -1,4 +1,4 @@
-package com.example.translatorapp.data.media
+package com.example.translatorapp.data.media.speech
 
 import android.content.Context
 import androidx.annotation.OptIn
@@ -7,7 +7,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import com.example.translatorapp.domain.media.AudioPlayer
+import com.example.translatorapp.domain.media.speech.AudioPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
