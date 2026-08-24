@@ -2,6 +2,7 @@ package com.example.translatorapp.presentation.screen.translation.account
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,22 +53,14 @@ fun AccountBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        shape = RoundedCornerShape(
-            topStart = 24.dp,
-            topEnd = 24.dp
-        )
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp)
+                .padding(bottom = 16.dp)
         ) {
-
-            AccountSheetHeader(
-                onDoneClick = onDismissRequest
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+            AccountSheetHeader(onDoneClick = onDismissRequest)
 
             AccountCard(
                 photoUrl = photoUrl,
@@ -75,9 +68,7 @@ fun AccountBottomSheet(
                 email = email
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            HorizontalDivider(thickness = 1.dp)
+            HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
 
             AccountActionItem(
                 icon = Icons.Outlined.Settings,
@@ -99,11 +90,13 @@ private fun AccountSheetHeader(onDoneClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .height(64.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "Select an Account",
-            style = MaterialTheme.typography.titleLarge, // увеличили размер
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier.align(Alignment.Center)
         )
 
@@ -121,30 +114,32 @@ private fun AccountSheetHeader(onDoneClick: () -> Unit) {
 }
 
 @Composable
-private fun AccountCard(
-    photoUrl: String,
-    name: String,
-    email: String,
-) {
+private fun AccountCard(photoUrl: String, name: String, email: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        AccountPhoto(photoUrl = photoUrl)
+        AccountPhoto(
+            photoUrl = photoUrl,
+            modifier = Modifier.size(44.dp)
+        )
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Column {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
+        Column(
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (name.isNotBlank()) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
 
-            Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(2.dp))
+            }
 
             Text(
                 text = email,
@@ -156,12 +151,11 @@ private fun AccountCard(
 }
 
 @Composable
-private fun AccountPhoto(photoUrl: String?) {
+private fun AccountPhoto(photoUrl: String?, modifier: Modifier = Modifier) {
     val placeholderColor = MaterialTheme.colorScheme.surfaceVariant
 
     Box(
-        modifier = Modifier
-            .size(40.dp)
+        modifier = modifier
             .clip(CircleShape)
             .background(placeholderColor),
         contentAlignment = Alignment.Center
@@ -176,33 +170,32 @@ private fun AccountPhoto(photoUrl: String?) {
         } else {
             Icon(
                 imageVector = Icons.Outlined.Person,
-                contentDescription = "Empty Account Image",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
             )
         }
     }
 }
 
 @Composable
-private fun AccountActionItem(
-    icon: ImageVector,
-    text: String,
-    onItemClick: () -> Unit,
-) {
+private fun AccountActionItem(icon: ImageVector, text: String, onItemClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(56.dp)
             .clickable(onClick = onItemClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = "Account action",
-            tint = MainColor
+            contentDescription = null,
+            tint = MainColor,
+            modifier = Modifier.size(24.dp)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(20.dp))
 
         Text(
             text = text,

@@ -9,4 +9,6 @@ interface GlobalRepository {
     suspend fun setSourceLanguage(code: String)
 
     suspend fun setDestinationLanguage(code: String)
+
+    suspend fun setLanguages(sourceCode: String, destinationCode: String)
 }

@@ -19,6 +19,7 @@ import com.example.translatorapp.domain.usecase.authorization.SignInGoogleUseCas
 import com.example.translatorapp.domain.usecase.dataStore.ObservePreferencesUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguageUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SwapLanguagesUseCase
 import com.example.translatorapp.domain.usecase.translation.ClearHistoryUseCase
 import com.example.translatorapp.domain.usecase.translation.DeleteTranslationUseCase
 import com.example.translatorapp.domain.usecase.translation.ObserveFavouritesUseCase
@@ -104,6 +105,10 @@ object DomainModule {
     @Provides
     fun provideObservePreferencesUseCase(globalRepository: GlobalRepository): ObservePreferencesUseCase =
         ObservePreferencesUseCase(globalRepository)
+
+    @Provides
+    fun provideSwapLanguagesUseCase(globalRepository: GlobalRepository): SwapLanguagesUseCase =
+        SwapLanguagesUseCase(globalRepository)
 
     // Media UseCases
     @Provides

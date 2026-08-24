@@ -1,25 +1,16 @@
 package com.example.translatorapp.presentation.ui.components
 
+import android.content.ClipDescription
+import android.content.ClipboardManager
+import android.content.Context
 import android.media.MediaActionSound
-import android.util.Log
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,7 +23,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,11 +40,9 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Bookmarks
@@ -90,7 +78,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -119,12 +110,12 @@ fun TranslationTopBar(
     onResetUiMode: () -> Unit,
     onAccountClick: () -> Unit,
 ) {
-    if (isSimple) {
+    if (isSimple)
         CenterAlignedTopAppBar(
             title = {},
             navigationIcon = { ButtonBack(onNavBackClick = onResetUiMode) }
         )
-    } else {
+    else
         CenterAlignedTopAppBar(
             title = {
                 Text(
@@ -157,11 +148,11 @@ fun TranslationTopBar(
                 }
             }
         )
-    }
 }
 
 @Composable
 fun TranslationCard(
+    modifier: Modifier = Modifier,
     sourceText: String,
     translatedText: String,
     hasInput: Boolean,
@@ -177,18 +168,22 @@ fun TranslationCard(
     @Suppress("DEPRECATION")
     val clipboard = LocalClipboardManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val hasClipboardText = !clipboard.getText().isNullOrEmpty()
+    val hapticFeedback = LocalHapticFeedback.current
+
+    val hasClipboardText = rememberHasClipboardText()
 
     val focusRequester = remember { FocusRequester() }
     val elevation by animateDpAsState(targetValue = if (isFocused) 8.dp else 2.dp)
-    val minHeight by animateDpAsState(targetValue = if (isFocused) 120.dp else 160.dp)
+
+    val textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 30.sp, lineHeight = 36.sp)
 
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = minHeight)
             .clickable {
                 if (!isFocused) {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.VirtualKey)
+
                     focusRequester.requestFocus()
                 }
             },
@@ -204,17 +199,15 @@ fun TranslationCard(
             OutlinedTextField(
                 value = sourceText,
                 onValueChange = onTextChanged,
+                textStyle = textStyle,
                 placeholder = {
                     Text(
                         text = "Enter text",
-                        fontSize = 30.sp,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = textStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
-                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
                         if (hasInput) {
@@ -225,14 +218,12 @@ fun TranslationCard(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(560.dp)
                     .focusRequester(focusRequester)
-                    .onFocusChanged {
-                        onFocusChanged(it.isFocused)
-                    },
+                    .onFocusChanged { onFocusChanged(it.isFocused) },
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent
+                    focusedBorderColor = Color.Transparent,
+                    cursorColor = MainColor
                 )
             )
 
@@ -264,25 +255,21 @@ fun TranslationCard(
                     }
                 }
             }
-
             AnimatedVisibility(visible = hasInput) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                     Text(
                         text = translatedText,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = textStyle
                     )
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        IconButton(
-                            onClick = onPlayTranslationAudio
-                        ) {
+                        IconButton(onClick = onPlayTranslationAudio) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                 contentDescription = "Translation audio"
@@ -295,11 +282,10 @@ fun TranslationCard(
                             onClick = onToggleFavourite
                         ) {
                             Icon(
-                                imageVector = if (isFavourite) {
+                                imageVector = if (isFavourite)
                                     Icons.Filled.Bookmark
-                                } else {
-                                    Icons.Default.BookmarkBorder
-                                },
+                                else
+                                    Icons.Default.BookmarkBorder,
                                 tint = MainColor,
                                 contentDescription = "Toggle favourite"
                             )
@@ -324,6 +310,38 @@ fun TranslationCard(
             }
         }
     }
+}
+
+@Composable
+private fun rememberHasClipboardText(): Boolean {
+    val context = LocalContext.current
+
+    val clipboardManager = remember {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
+
+    fun hasText(): Boolean {
+        val description = clipboardManager.primaryClipDescription ?: return false
+
+        return clipboardManager.hasPrimaryClip() &&
+                (description.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                        || description.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML))
+    }
+
+    var hasClipboardText by remember { mutableStateOf(hasText()) }
+
+    DisposableEffect(clipboardManager) {
+        val listener =
+            ClipboardManager.OnPrimaryClipChangedListener { hasClipboardText = hasText() }
+
+        clipboardManager.addPrimaryClipChangedListener(listener)
+
+        onDispose {
+            clipboardManager.removePrimaryClipChangedListener(listener)
+        }
+    }
+
+    return hasClipboardText
 }
 
 @Composable
@@ -368,21 +386,23 @@ fun LanguageSelector(
 ) {
     var isSwapping by remember { mutableStateOf(false) }
 
-    val transition = updateTransition(targetState = isSwapping)
+    val offset by animateDpAsState(
+        targetValue = if (isSwapping) 72.dp else 0.dp,
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)
+    )
 
-    val offset by transition.animateDp(
-        transitionSpec = { tween(durationMillis = 300) }
-    ) { swapping ->
-        if (swapping) 48.dp else 0.dp
-    }
+    val scale by animateFloatAsState(
+        targetValue = if (isSwapping) 0.96f else 1f,
+        animationSpec = tween(durationMillis = 130)
+    )
 
     LaunchedEffect(isSwapping) {
         if (isSwapping) {
-            delay(150)
+            delay(300)
 
             onSwapLanguages()
 
-            delay(150)
+            delay(130)
 
             isSwapping = false
         }
@@ -393,125 +413,92 @@ fun LanguageSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         LanguageChip(
-            language = sourceLanguage,
+            selectedLanguage = sourceLanguage,
             languageList = languageList,
-            onSelected = {
-                if (it.code != destinationLanguage.code) {
-                    onSourceLanguageChange(it)
-                }
-            },
+            disabledLanguage = destinationLanguage,
+            onSelected = onSourceLanguageChange,
             modifier = Modifier
                 .weight(1f)
                 .offset(x = offset)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
         )
 
         Spacer(Modifier.width(8.dp))
 
         SwapButton(
             onClick = {
-                if (!isSwapping && sourceLanguage.code != destinationLanguage.code) {
+                if (!isSwapping && sourceLanguage.code != destinationLanguage.code)
                     isSwapping = true
-                }
             }
         )
 
         Spacer(Modifier.width(8.dp))
 
         LanguageChip(
-            language = destinationLanguage,
+            selectedLanguage = destinationLanguage,
             languageList = languageList,
-            onSelected = {
-                if (it.code != sourceLanguage.code) {
-                    onDestinationLanguageChange(it)
-                }
-            },
+            disabledLanguage = sourceLanguage,
+            onSelected = onDestinationLanguageChange,
             modifier = Modifier
                 .weight(1f)
-                .offset(x = -offset),
+                .offset(x = -offset)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LanguageChip(
-    language: LanguageCode,
+    selectedLanguage: LanguageCode,
+    disabledLanguage: LanguageCode,
     languageList: List<LanguageCode>,
     onSelected: (LanguageCode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
-    Box(modifier = modifier) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .clickable(
-                    onClick = { expanded = true }
-                ),
-            shape = RoundedCornerShape(16.dp),
-            color = TranslationBoxColor,
-            tonalElevation = 2.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = language.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+    Surface(
+        modifier = modifier
+            .height(48.dp)
+            .clickable { expanded = true },
+        shape = RoundedCornerShape(16.dp),
+        color = TranslationBoxColor,
+        tonalElevation = 2.dp
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = selectedLanguage.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
         }
+    }
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            languageList.forEach { item ->
-                val isSelected = item.code == language.code
-
-                Surface(
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        Color.Transparent
-                    }
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = item.title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        onClick = {
-                            onSelected(item)
-
-                            expanded = false
-                        },
-                        trailingIcon = {
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    tint = MainColor,
-                                    contentDescription = "Selected language"
-                                )
-                            }
-                        }
-                    )
-                }
-            }
-        }
+    if (expanded) {
+        LanguageSelectionBottomSheet(
+            selectedLanguage = selectedLanguage,
+            disabledLanguage = disabledLanguage,
+            languageList = languageList,
+            onLanguageSelected = {
+                onSelected(it)
+                expanded = false
+            },
+            onDismiss = { expanded = false }
+        )
     }
 }
 
 @Composable
-private fun SwapButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun SwapButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .size(48.dp)
@@ -593,7 +580,8 @@ private fun SmallActionButton(
 
 @Composable
 private fun AudioButton(isRecording: Boolean, onClick: () -> Unit) {
-    val infTranslation = rememberInfiniteTransition()
+    val hapticFeedback = LocalHapticFeedback.current
+
     val activationSound = remember {
         MediaActionSound().apply {
             load(MediaActionSound.START_VIDEO_RECORDING)
@@ -601,56 +589,51 @@ private fun AudioButton(isRecording: Boolean, onClick: () -> Unit) {
         }
     }
 
-    val pulseScale by infTranslation.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 800,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        )
+    var isInitialState by remember { mutableStateOf(true) }
+
+    LaunchedEffect(isRecording) {
+        if (isInitialState) {
+            isInitialState = false
+
+            return@LaunchedEffect
+        }
+
+        if (isRecording)
+            activationSound.play(MediaActionSound.START_VIDEO_RECORDING)
+        else
+            activationSound.play(MediaActionSound.STOP_VIDEO_RECORDING)
+
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = if (isRecording) 1.05f else 1f,
+        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)
     )
 
     Surface(
         modifier = Modifier
             .size(72.dp)
             .graphicsLayer {
-                scaleX = if (isRecording) pulseScale else 1f
-                scaleY = if (isRecording) pulseScale else 1f
+                scaleX = scale
+                scaleY = scale
             }
             .clickable {
-                onClick()
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.VirtualKey)
 
-                if (isRecording) {
-                    activationSound.play(MediaActionSound.START_VIDEO_RECORDING)
-                } else {
-                    activationSound.play(MediaActionSound.STOP_VIDEO_RECORDING)
-                }
+                onClick()
             },
         shape = CircleShape,
-        color = ButtonColor
+        color = if (isRecording) MainColor else ButtonColor
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            AnimatedContent(
-                targetState = isRecording,
-                transitionSpec = { (scaleIn() + fadeIn() togetherWith (scaleOut() + fadeOut())) }
-            ) { recording ->
-                if (recording) {
-                    Icon(
-                        imageVector = Icons.Default.Stop,
-                        contentDescription = "Stop recording",
-                        tint = MaterialTheme.colorScheme.onError
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Voice input",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
+        Box(
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Mic,
+                contentDescription = if (isRecording) "Stop voice input" else "Voice input",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(28.dp)
+            )
         }
     }
 
@@ -675,9 +658,7 @@ fun HistoryTopBar(onNavBackClick: () -> Unit, onClear: () -> Unit) {
         },
         navigationIcon = { ButtonBack(onNavBackClick = onNavBackClick) },
         actions = {
-            IconButton(
-                onClick = onClear
-            ) {
+            IconButton(onClick = onClear) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
                     tint = MainColor,
@@ -697,9 +678,7 @@ fun HistoryList(
 ) {
     val grouped = translationsList.groupBy { formatDateTime(it.timestamp) }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         grouped.forEach { (date, items) ->
             stickyHeader {
                 DateHeader(date)
@@ -709,14 +688,8 @@ fun HistoryList(
                 items = items,
                 key = { it.id }
             ) { translation ->
-                HistoryItemContainer(
-                    id = translation.id,
-                    onDelete = onDelete
-                ) {
-                    HistoryItem(
-                        translation = translation,
-                        onToggleFavourite = onToggleFavourite
-                    )
+                HistoryItemContainer(id = translation.id, onDelete = onDelete) {
+                    HistoryItem(translation = translation, onToggleFavourite = onToggleFavourite)
                 }
             }
         }
@@ -741,11 +714,10 @@ private fun HistoryItemContainer(
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+        targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart)
             MaterialTheme.colorScheme.error
-        } else {
+        else
             Color.Transparent
-        }
     )
 
     SwipeToDismissBox(
@@ -810,11 +782,10 @@ private fun HistoryItem(
                 onClick = { onToggleFavourite(translation.id, translation.isFavourite) }
             ) {
                 Icon(
-                    imageVector = if (translation.isFavourite) {
+                    imageVector = if (translation.isFavourite)
                         Icons.Filled.Bookmark
-                    } else {
-                        Icons.Default.BookmarkBorder
-                    },
+                    else
+                        Icons.Default.BookmarkBorder,
                     tint = MainColor,
                     contentDescription = "Toggle favourite"
                 )
@@ -857,9 +828,7 @@ fun FavouritesTopBar(
         navigationIcon = { ButtonBack(onNavBackClick = onNavBackClick) },
         actions = {
             Box {
-                IconButton(
-                    onClick = { isMenuExpanded = true },
-                ) {
+                IconButton(onClick = { isMenuExpanded = true }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Sort,
                         tint = MainColor,
@@ -952,11 +921,10 @@ private fun FavouritesItem(
                 onClick = { onToggleFavourite(translation.id, translation.isFavourite) }
             ) {
                 Icon(
-                    imageVector = if (translation.isFavourite) {
+                    imageVector = if (translation.isFavourite)
                         Icons.Filled.Bookmark
-                    } else {
-                        Icons.Default.BookmarkBorder
-                    },
+                    else
+                        Icons.Default.BookmarkBorder,
                     tint = MainColor,
                     contentDescription = "Toggle favourite"
                 )

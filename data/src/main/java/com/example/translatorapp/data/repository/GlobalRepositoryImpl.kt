@@ -32,4 +32,13 @@ class GlobalRepositoryImpl @Inject constructor(
     override suspend fun setDestinationLanguage(code: String) {
         dataStore.updateData { it.copy(destinationLanguageCode = code) }
     }
+
+    override suspend fun setLanguages(sourceCode: String, destinationCode: String) {
+        dataStore.updateData {
+            it.copy(
+                sourceLanguageCode = sourceCode,
+                destinationLanguageCode = destinationCode,
+            )
+        }
+    }
 }

@@ -249,9 +249,7 @@ private fun findBestFontSize(
     if (text.isBlank() || maxWidthPx <= 0 || maxHeightPx <= 0)
         return 7f
 
-    val maxFontSizeSp = with(density) {
-        maxHeightPx.toFloat().toSp().value
-    }
+    val maxFontSizeSp = with(density) { maxHeightPx.toFloat().toSp().value }
         .times(0.82f)
         .coerceAtMost(40f)
 
@@ -378,58 +376,61 @@ fun TransparentLanguageSelector(
             TransparentLanguageChip(
                 modifier = Modifier
                     .offset(x = offset),
-                language = sourceLanguage,
+                selectedLanguage = sourceLanguage,
+                disabledLanguage = destinationLanguage,
                 languageList = languageList,
                 onSelected = { if (it.code != destinationLanguage.code) onSourceLanguageChange(it) }
             )
 
             Spacer(Modifier.width(4.dp))
 
-            IconButton(
+            TransparentSwapButton(
                 onClick = {
                     if (!isSwapping && sourceLanguage.code != destinationLanguage.code)
                         isSwapping = true
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = "Swap languages",
-                    tint = Color.White
-                )
-            }
+            )
 
             Spacer(Modifier.width(4.dp))
 
             TransparentLanguageChip(
                 modifier = Modifier
                     .offset(x = -offset),
-                language = destinationLanguage,
+                selectedLanguage = destinationLanguage,
+                disabledLanguage = sourceLanguage,
                 languageList = languageList,
-                onSelected = {
-                    if (it.code != sourceLanguage.code)
-                        onDestinationLanguageChange(it)
-                }
+                onSelected = { if (it.code != sourceLanguage.code) onDestinationLanguageChange(it) }
             )
         }
+    }
+}
+
+@Composable
+private fun TransparentSwapButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = Icons.Default.SwapHoriz,
+            contentDescription = "Swap languages",
+            tint = Color.White
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TransparentLanguageChip(
-    language: LanguageCode,
+    selectedLanguage: LanguageCode,
+    disabledLanguage: LanguageCode,
     languageList: List<LanguageCode>,
     onSelected: (LanguageCode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by rememberSaveable {
-        mutableStateOf(false)
-    }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     Text(
         modifier = modifier
             .clickable { expanded = true },
-        text = language.title,
+        text = selectedLanguage.title,
         color = Color.White,
         maxLines = 1,
         textAlign = TextAlign.Center,
@@ -440,38 +441,34 @@ private fun TransparentLanguageChip(
 
     if (expanded) {
         LanguageSelectionBottomSheet(
-            selectedLanguage = language,
+            selectedLanguage = selectedLanguage,
+            disabledLanguage = disabledLanguage,
             languageList = languageList,
             onLanguageSelected = {
                 onSelected(it)
                 expanded = false
             },
-            onDismiss = {
-                expanded = false
-            }
+            onDismiss = { expanded = false }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LanguageSelectionBottomSheet(
+fun LanguageSelectionBottomSheet(
     selectedLanguage: LanguageCode,
+    disabledLanguage: LanguageCode,
     languageList: List<LanguageCode>,
     onLanguageSelected: (LanguageCode) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var query by rememberSaveable {
-        mutableStateOf("")
-    }
+    var query by rememberSaveable { mutableStateOf("") }
 
     val filteredLanguages = remember(languageList, query) {
         if (query.isBlank())
             languageList
         else
-            languageList.filter {
-                it.title.contains(query, ignoreCase = true)
-            }
+            languageList.filter { it.title.contains(query, ignoreCase = true) }
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -506,11 +503,14 @@ private fun LanguageSelectionBottomSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
                 items(items = filteredLanguages, key = { it.code }) { item ->
                     LanguageItem(
                         language = item,
                         isSelected = item.code == selectedLanguage.code,
+                        isDisabled = item.code == disabledLanguage.code,
                         onClick = { onLanguageSelected(item) }
                     )
                 }
@@ -520,17 +520,26 @@ private fun LanguageSelectionBottomSheet(
 }
 
 @Composable
-private fun LanguageItem(language: LanguageCode, isSelected: Boolean, onClick: () -> Unit) {
+private fun LanguageItem(
+    language: LanguageCode,
+    isSelected: Boolean,
+    isDisabled: Boolean,
+    onClick: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = !isDisabled, onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = language.title,
             style = MaterialTheme.typography.bodyLarge,
+            color = if (isDisabled)
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            else
+                MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
 
@@ -538,7 +547,7 @@ private fun LanguageItem(language: LanguageCode, isSelected: Boolean, onClick: (
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = MainColor
             )
         }
     }

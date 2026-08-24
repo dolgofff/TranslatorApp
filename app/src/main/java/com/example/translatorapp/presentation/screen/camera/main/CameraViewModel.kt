@@ -15,6 +15,7 @@ import com.example.translatorapp.domain.model.ml.RecognizedText
 import com.example.translatorapp.domain.usecase.dataStore.ObservePreferencesUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetDestinationLanguageUseCase
 import com.example.translatorapp.domain.usecase.dataStore.SetSourceLanguageUseCase
+import com.example.translatorapp.domain.usecase.dataStore.SwapLanguagesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -42,6 +42,7 @@ class CameraViewModel @Inject constructor(
     private val cameraController: CameraController,
     private val setSourceLanguageUseCase: SetSourceLanguageUseCase,
     private val setDestinationLanguageUseCase: SetDestinationLanguageUseCase,
+    private val swapLanguagesUseCase: SwapLanguagesUseCase,
     private val cameraTextTranslator: CameraTextTranslator,
     private val observePreferencesUseCase: ObservePreferencesUseCase,
     private val textStabilizer: TextStabilizer,
@@ -57,7 +58,7 @@ class CameraViewModel @Inject constructor(
         .map { recognized -> textStabilizer.stabilize(recognized) }
         .shareIn(
             scope = viewModelScope,
-            started = SharingStarted.Companion.WhileSubscribed(5_000),
+            started = SharingStarted.WhileSubscribed(5_000),
             replay = 1
         )
 
@@ -162,29 +163,25 @@ class CameraViewModel @Inject constructor(
     }
 
     private fun observeSavedLanguages() {
-        viewModelScope.launch {
-            val settings = observePreferencesUseCase().first()
-
-            val savedSourceLanguage = settings.savedSourceLanguage
-            val savedDestinationLanguage = settings.savedDestinationLanguage
-
-            _cameraState.update { current ->
-                if (
-                    current.sourceLanguage == savedSourceLanguage &&
-                    current.destinationLanguage == savedDestinationLanguage
-                ) {
-                    current
-                } else {
-                    current.copy(
-                        sourceLanguage = savedSourceLanguage,
-                        destinationLanguage = savedDestinationLanguage
-                    )
+        observePreferencesUseCase()
+            .onEach { settings ->
+                _cameraState.update { current ->
+                    if (current.sourceLanguage == settings.savedSourceLanguage && current.destinationLanguage == settings.savedDestinationLanguage)
+                        current
+                    else
+                        current.copy(
+                            sourceLanguage = settings.savedSourceLanguage,
+                            destinationLanguage = settings.savedDestinationLanguage,
+                        )
                 }
             }
-        }
+            .launchIn(viewModelScope)
     }
 
     fun updateSourceLanguage(language: LanguageCode) {
+        if (_cameraState.value.sourceLanguage == language)
+            return
+
         _cameraState.update { it.copy(sourceLanguage = language) }
 
         viewModelScope.launch {
@@ -196,6 +193,9 @@ class CameraViewModel @Inject constructor(
     }
 
     fun updateDestinationLanguage(language: LanguageCode) {
+        if (_cameraState.value.destinationLanguage == language)
+            return
+
         _cameraState.update { it.copy(destinationLanguage = language) }
 
         viewModelScope.launch {
@@ -218,8 +218,10 @@ class CameraViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            setSourceLanguageUseCase(newSourceLanguage.code)
-            setDestinationLanguageUseCase(newDestinationLanguage.code)
+            swapLanguagesUseCase(
+                sourceCode = newSourceLanguage.code,
+                destinationCode = newDestinationLanguage.code,
+            )
 
             cameraTextTranslator.clearCache()
             refreshDisplayedBlocks()
@@ -258,6 +260,6 @@ class CameraViewModel @Inject constructor(
         val isCapturing: Boolean = false,
         val sourceLanguage: LanguageCode = LanguageCode.ENGLISH,
         val destinationLanguage: LanguageCode = LanguageCode.RUSSIAN,
-        val languageList: List<LanguageCode> = LanguageCode.Companion.getLanguageList(),
+        val languageList: List<LanguageCode> = LanguageCode.getLanguageList(),
     )
 }
