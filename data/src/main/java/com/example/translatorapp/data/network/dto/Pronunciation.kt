@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Pronunciation(
-    @SerialName("destination-text-audio") val destinationTextAudio: String?,
-    @SerialName("source-text-audio") val sourceTextAudio: String?,
+    @SerialName("destination-text-audio") val destinationTextAudio: String? = null,
+    @SerialName("source-text-audio") val sourceTextAudio: String? = null,
 )

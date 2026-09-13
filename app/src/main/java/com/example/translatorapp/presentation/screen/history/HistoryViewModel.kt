@@ -1,5 +1,6 @@
 package com.example.translatorapp.presentation.screen.history
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.translatorapp.domain.usecase.translation.ClearHistoryUseCase
@@ -43,6 +44,12 @@ class HistoryViewModel @Inject constructor(
     fun clear() {
         viewModelScope.launch {
             clearHistoryUseCase()
+                .onSuccess {
+                    Log.d("History", "Clear success")
+                }
+                .onFailure {
+                    Log.e("History", "Clear failed", it)
+                }
         }
     }
 

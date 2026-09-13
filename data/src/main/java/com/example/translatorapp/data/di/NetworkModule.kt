@@ -48,7 +48,8 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(json: Json, okHttp: Lazy<Call.Factory>): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://free-translate-api-y9ba.onrender.com/")
+            .baseUrl("https://freetranslateapi-production.up.railway.app/")
+            //.baseUrl("https://free-translate-api-y9ba.onrender.com/")
             .callFactory { okHttp.get().newCall(it) }
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

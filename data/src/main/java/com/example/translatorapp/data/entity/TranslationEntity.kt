@@ -7,5 +7,5 @@ data class TranslationEntity(
     val sourceLanguage: String? = null,
     val targetLanguage: String? = null,
     val timestamp: Long? = null,
-    val isFavourite: Boolean? = null,
+    val favourite: Boolean? = null,
 )

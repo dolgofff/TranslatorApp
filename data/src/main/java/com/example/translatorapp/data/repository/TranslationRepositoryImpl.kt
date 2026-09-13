@@ -76,7 +76,7 @@ class TranslationRepositoryImpl @Inject constructor(
 
             userTranslations
                 .document(id)
-                .update("isFavourite", isFavourite)
+                .update("favourite", isFavourite)
                 .await()
 
             Result.success(Unit)
@@ -92,7 +92,7 @@ class TranslationRepositoryImpl @Inject constructor(
                 ?: return Result.failure(TranslationError.NotAuthenticated())
 
             val data = userTranslations
-                .whereEqualTo("isFavourite", false)
+                .whereEqualTo("favourite", false)
                 .get()
                 .await()
 

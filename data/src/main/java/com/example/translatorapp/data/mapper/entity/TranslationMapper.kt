@@ -2,8 +2,8 @@ package com.example.translatorapp.data.mapper.entity
 
 import com.example.translatorapp.data.entity.TranslationEntity
 import com.example.translatorapp.data.network.dto.TranslationResponse
-import com.example.translatorapp.domain.model.language.LanguageCode
 import com.example.translatorapp.domain.model.base.Translation
+import com.example.translatorapp.domain.model.language.LanguageCode
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -14,9 +14,7 @@ fun TranslationResponse.toDomainTranslation(
     sourceLanguage: LanguageCode,
     targetLanguage: LanguageCode,
 ): Translation {
-    val translatedText = translations?.possibleTranslations
-        ?.firstOrNull()
-        .orEmpty()
+    val translatedText = destinationText.orEmpty()
 
     val sourceAudioUrl = pronunciation?.sourceTextAudio
     val destinationAudioUrl = pronunciation?.destinationTextAudio
@@ -43,7 +41,7 @@ fun Translation.toEntityTranslation(): TranslationEntity =
         sourceLanguage = sourceLanguage.code,
         targetLanguage = targetLanguage.code,
         timestamp = timestamp.toEpochMilliseconds(),
-        isFavourite = isFavourite
+        favourite = isFavourite
     )
 
 @OptIn(ExperimentalTime::class)
@@ -57,5 +55,5 @@ fun TranslationEntity.toDomainTranslation(id: String): Translation =
         timestamp = Instant.fromEpochMilliseconds(
             timestamp ?: Clock.System.now().toEpochMilliseconds()
         ),
-        isFavourite = isFavourite ?: false
+        isFavourite = favourite ?: false
     )
