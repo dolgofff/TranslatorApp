@@ -154,19 +154,35 @@ Where appropriate, running jobs are explicitly cancelled when newer user input m
 
 * **Coil**
 
-## Screenshots
-
-> Screenshots and demonstration media will be added as the UI is finalized.
-
-<!--
-Example layout:
+## Screenshots 
 
 <p align="center">
-  <img src="docs/screenshots/translation.png" width="30%" />
-  <img src="docs/screenshots/camera.png" width="30%" />
-  <img src="docs/screenshots/account.png" width="30%" />
+  <img src="screenshots/screenshots/1.png" width="30%" />
+  <img src="screenshots/screenshots/2.png" width="30%" />
+  <img src="screenshots/screenshots/3.png" width="30%" />
 </p>
--->
+
+<p align="center">
+  <img src="screenshots/screenshots/4.png" width="30%" />
+  <img src="screenshots/screenshots/5.png" width="30%" />
+  <img src="screenshots/screenshots/6.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screenshots/7.png" width="30%" />
+  <img src="screenshots/screenshots/8.png" width="30%" />
+  <img src="screenshots/screenshots/9.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screenshots/10.png" width="30%" />
+  <img src="screenshots/screenshots/11.png" width="30%" />
+  <img src="screenshots/screenshots/12.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screenshots/13.png" width="30%" />
+</p>
 
 ## Project Structure
 
