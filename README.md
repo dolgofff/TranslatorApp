@@ -176,11 +176,7 @@ Where appropriate, running jobs are explicitly cancelled when newer user input m
 
 <p align="center">
   <img src="screenshots/screenshots/10.png" width="30%" />
-  <img src="screenshots/screenshots/11.png" width="30%" />
   <img src="screenshots/screenshots/12.png" width="30%" />
-</p>
-
-<p align="center">
   <img src="screenshots/screenshots/13.png" width="30%" />
 </p>
 
