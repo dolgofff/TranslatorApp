@@ -654,16 +654,15 @@ fun ImageTranslationContent(
 
         Button(
             onClick = onGoToTranslatorClick,
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 2.dp
+            ),
+            enabled = state.recognizedText?.blocks?.isNotEmpty() == true,
+            colors = ButtonDefaults.buttonColors(containerColor = MainColor),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(24.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(50)
-                ),
-            enabled = state.recognizedText?.blocks?.isNotEmpty() == true,
-            colors = ButtonDefaults.buttonColors(containerColor = MainColor)
+                .padding(24.dp),
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,

@@ -261,8 +261,11 @@ fun TranslationCard(
 
                     Text(
                         text = translatedText,
-                        style = textStyle
+                        style = textStyle,
+                        color = MainColor,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
